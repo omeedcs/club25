@@ -3,169 +3,330 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase/client'
-import { Calendar, Users, TrendingUp, Plus, Settings, MessageCircle, QrCode } from 'lucide-react'
-import Link from 'next/link'
+import { 
+  Calendar, Users, TrendingUp, DollarSign, Key, CheckCircle, 
+  Clock, AlertCircle, Activity, ArrowUpRight, ArrowDownRight
+} from 'lucide-react'
 
-export default function AdminDashboard() {
-  const [stats, setStats] = useState({
+interface Stats {
+  // Drops
+  totalDrops: number
+  activeDrops: number
+  completedDrops: number
+  
+  // RSVPs
+  totalRSVPs: number
+  confirmedSeats: number
+  waitlistCount: number
+  cancelledCount: number
+  conversionRate: number
+  
+  // Invite Codes
+  totalCodes: number
+  activeCodes: number
+  totalInvites: number
+  codeUsageRate: number
+  
+  // Attendance
+  totalCheckins: number
+  attendanceRate: number
+  
+  // Revenue (if you add pricing later)
+  totalRevenue: number
+  avgTicketPrice: number
+}
+
+interface RecentActivity {
+  id: string
+  type: 'rsvp' | 'checkin' | 'code_used'
+  user: string
+  drop: string
+  timestamp: Date
+}
+
+export default function EnhancedAdminDashboard() {
+  const [stats, setStats] = useState<Stats>({
     totalDrops: 0,
     activeDrops: 0,
+    completedDrops: 0,
     totalRSVPs: 0,
-    confirmedSeats: 0
+    confirmedSeats: 0,
+    waitlistCount: 0,
+    cancelledCount: 0,
+    conversionRate: 0,
+    totalCodes: 0,
+    activeCodes: 0,
+    totalInvites: 0,
+    codeUsageRate: 0,
+    totalCheckins: 0,
+    attendanceRate: 0,
+    totalRevenue: 0,
+    avgTicketPrice: 0
   })
+  
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function fetchStats() {
-      try {
-        const [dropsRes, rsvpsRes] = await Promise.all([
-          supabase.from('drops').select('*', { count: 'exact' }),
-          supabase.from('rsvps').select('*', { count: 'exact' })
-        ])
+    fetchComprehensiveStats()
+    
+    // Set up real-time subscriptions
+    const rsvpSubscription = supabase
+      .channel('rsvps_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rsvps' }, () => {
+        fetchComprehensiveStats()
+      })
+      .subscribe()
 
-        const activeDrops = dropsRes.data?.filter(d => 
-          d.status === 'announced' || d.status === 'sold_out'
-        ).length || 0
-
-        const confirmedSeats = rsvpsRes.data?.filter(r => 
-          r.status === 'confirmed'
-        ).length || 0
-
-        setStats({
-          totalDrops: dropsRes.count || 0,
-          activeDrops,
-          totalRSVPs: rsvpsRes.count || 0,
-          confirmedSeats
-        })
-      } catch (error) {
-        console.error('Error fetching stats:', error)
-      } finally {
-        setLoading(false)
-      }
+    return () => {
+      rsvpSubscription.unsubscribe()
     }
-    fetchStats()
   }, [])
 
-  const statCards = [
-    { label: 'Total Drops', value: stats.totalDrops, icon: Calendar, color: 'blue' },
-    { label: 'Active Drops', value: stats.activeDrops, icon: TrendingUp, color: 'gold' },
-    { label: 'Total RSVPs', value: stats.totalRSVPs, icon: Users, color: 'lilac' },
-    { label: 'Confirmed Seats', value: stats.confirmedSeats, icon: TrendingUp, color: 'gold' }
-  ]
+  async function fetchComprehensiveStats() {
+    try {
+      const [
+        dropsRes,
+        rsvpsRes,
+        codesRes,
+        checkinsRes,
+        profilesRes
+      ] = await Promise.all([
+        supabase.from('drops').select('*'),
+        supabase.from('rsvps').select('*, drops(*), profiles(*)'),
+        supabase.from('invite_codes').select('*'),
+        supabase.from('checkins').select('*'),
+        supabase.from('profiles').select('*')
+      ])
+
+      const drops = dropsRes.data || []
+      const rsvps = rsvpsRes.data || []
+      const codes = codesRes.data || []
+      const checkins = checkinsRes.data || []
+      const profiles = profilesRes.data || []
+
+      // Calculate stats
+      const activeDrops = drops.filter(d => d.status === 'announced' || d.status === 'sold_out').length
+      const completedDrops = drops.filter(d => d.status === 'completed').length
+      
+      const confirmedSeats = rsvps.filter(r => r.status === 'confirmed').length
+      const waitlistCount = rsvps.filter(r => r.status === 'waitlist').length
+      const cancelledCount = rsvps.filter(r => r.status === 'cancelled').length
+      
+      const conversionRate = rsvps.length > 0 
+        ? (confirmedSeats / rsvps.length) * 100 
+        : 0
+
+      const activeCodes = codes.filter(c => c.active).length
+      const totalInvites = codes.reduce((sum, c) => sum + c.current_uses, 0)
+      const maxPossibleUses = codes.reduce((sum, c) => sum + c.max_uses, 0)
+      const codeUsageRate = maxPossibleUses > 0
+        ? (totalInvites / maxPossibleUses) * 100
+        : 0
+
+      const attendanceRate = confirmedSeats > 0
+        ? (checkins.length / confirmedSeats) * 100
+        : 0
+
+      setStats({
+        totalDrops: drops.length,
+        activeDrops,
+        completedDrops,
+        totalRSVPs: rsvps.length,
+        confirmedSeats,
+        waitlistCount,
+        cancelledCount,
+        conversionRate,
+        totalCodes: codes.length,
+        activeCodes,
+        totalInvites,
+        codeUsageRate,
+        totalCheckins: checkins.length,
+        attendanceRate,
+        totalRevenue: 0, // TODO: Add pricing system
+        avgTicketPrice: 0
+      })
+
+      // Build recent activity
+      const activity: RecentActivity[] = []
+      
+      // Recent RSVPs
+      rsvps.slice(0, 5).forEach(rsvp => {
+        if (rsvp.status === 'confirmed') {
+          activity.push({
+            id: rsvp.id,
+            type: 'rsvp',
+            user: rsvp.profiles?.name || 'Guest',
+            drop: rsvp.drops?.title || 'Unknown',
+            timestamp: new Date(rsvp.created_at)
+          })
+        }
+      })
+
+      setRecentActivity(activity.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).slice(0, 10))
+
+    } catch (error) {
+      console.error('Error fetching stats:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-club-blue via-club-lilac/20 to-club-blue">
-        <div className="text-club-cream/50 text-xl">Loading...</div>
+      <div className="flex items-center justify-center h-screen">
+        <motion.div
+          className="w-12 h-12 border-2 border-club-gold border-t-transparent rounded-full"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        />
       </div>
     )
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-club-blue via-club-lilac/20 to-club-blue text-club-cream">
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-12">
-          <div>
-            <h1 className="text-5xl font-serif mb-2">Admin Dashboard</h1>
-            <p className="text-club-cream/70">Manage drops, RSVPs, and guests</p>
-          </div>
-          <Link href="/">
-            <button className="px-6 py-3 border border-club-cream/30 hover:border-club-cream text-club-cream transition-colors">
-              View Site →
-            </button>
-          </Link>
-        </div>
+  const mainStats = [
+    { 
+      label: 'Total Drops', 
+      value: stats.totalDrops, 
+      icon: Calendar, 
+      color: 'blue',
+      subtitle: `${stats.activeDrops} active`
+    },
+    { 
+      label: 'Confirmed Seats', 
+      value: stats.confirmedSeats, 
+      icon: CheckCircle, 
+      color: 'gold',
+      subtitle: `${stats.waitlistCount} on waitlist`
+    },
+    { 
+      label: 'Conversion Rate', 
+      value: `${stats.conversionRate.toFixed(1)}%`, 
+      icon: TrendingUp, 
+      color: 'lilac',
+      subtitle: `${stats.totalRSVPs} total RSVPs`
+    },
+    { 
+      label: 'Active Inv. Codes', 
+      value: stats.activeCodes, 
+      icon: Key, 
+      color: 'gold',
+      subtitle: `${stats.totalInvites} uses`
+    },
+  ]
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {statCards.map((stat, i) => {
-            const Icon = stat.icon
-            return (
-              <motion.div
-                key={stat.label}
-                className="bg-club-charcoal/50 border border-club-cream/10 p-6 backdrop-blur-sm"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <Icon className={`w-8 h-8 text-club-${stat.color}`} />
-                  <span className="text-3xl font-serif">{stat.value}</span>
+  const secondaryStats = [
+    { label: 'Total Check-ins', value: stats.totalCheckins, change: null },
+    { label: 'Attendance Rate', value: `${stats.attendanceRate.toFixed(1)}%`, change: null },
+    { label: 'Code Usage', value: `${stats.codeUsageRate.toFixed(1)}%`, change: null },
+    { label: 'Cancelled', value: stats.cancelledCount, change: null },
+  ]
+
+  return (
+    <div className="p-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-serif mb-2">Dashboard</h1>
+        <p className="text-club-cream/60">Real-time analytics and system overview</p>
+      </div>
+
+      {/* Main Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {mainStats.map((stat, i) => {
+          const Icon = stat.icon
+          return (
+            <motion.div
+              key={stat.label}
+              className="bg-club-charcoal/30 border border-club-cream/10 p-6 rounded backdrop-blur-sm hover:border-club-cream/30 transition-all"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <Icon className="w-8 h-8 text-club-gold" />
+                <span className="text-3xl font-serif text-club-cream">{stat.value}</span>
+              </div>
+              <div className="text-club-cream/70 text-sm font-medium mb-1">{stat.label}</div>
+              <div className="text-club-cream/50 text-xs">{stat.subtitle}</div>
+            </motion.div>
+          )
+        })}
+      </div>
+
+      {/* Secondary Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {secondaryStats.map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            className="bg-club-charcoal/20 border border-club-cream/10 p-4 rounded"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 + i * 0.05 }}
+          >
+            <div className="text-2xl font-semibold mb-1">{stat.value}</div>
+            <div className="text-xs text-club-cream/60">{stat.label}</div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <motion.div
+          className="bg-club-charcoal/30 border border-club-cream/10 p-6 rounded"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <div className="flex items-center gap-2 mb-6">
+            <Activity className="w-5 h-5 text-club-gold" />
+            <h2 className="text-xl font-serif">Recent Activity</h2>
+          </div>
+
+          <div className="space-y-4">
+            {recentActivity.length > 0 ? (
+              recentActivity.map((activity, i) => (
+                <div key={activity.id} className="flex items-center gap-4 text-sm border-b border-club-cream/10 pb-3">
+                  <div className="w-2 h-2 rounded-full bg-club-gold" />
+                  <div className="flex-1">
+                    <div className="text-club-cream">{activity.user}</div>
+                    <div className="text-club-cream/50 text-xs">
+                      {activity.type === 'rsvp' && 'Reserved for'} {activity.drop}
+                    </div>
+                  </div>
+                  <div className="text-xs text-club-cream/50">
+                    {new Date(activity.timestamp).toLocaleTimeString()}
+                  </div>
                 </div>
-                <div className="text-club-cream/70 text-sm tracking-wide">{stat.label}</div>
-              </motion.div>
-            )
-          })}
-        </div>
+              ))
+            ) : (
+              <div className="text-club-cream/50 text-center py-8">No recent activity</div>
+            )}
+          </div>
+        </motion.div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Link href="/admin/drops/new">
-            <motion.div
-              className="bg-club-blue/20 border-2 border-club-blue p-8 cursor-pointer group hover:bg-club-blue/30 transition-all"
-              whileHover={{ scale: 1.02 }}
-            >
-              <Plus className="w-12 h-12 mb-4 text-club-gold" />
-              <h3 className="text-2xl font-serif mb-2 group-hover:text-club-gold transition-colors">
-                Create New Drop
-              </h3>
-              <p className="text-club-cream/70">Design a new chapter</p>
-            </motion.div>
-          </Link>
-
-          <Link href="/admin/drops">
-            <motion.div
-              className="bg-club-lilac/20 border-2 border-club-lilac p-8 cursor-pointer group hover:bg-club-lilac/30 transition-all"
-              whileHover={{ scale: 1.02 }}
-            >
-              <Calendar className="w-12 h-12 mb-4 text-club-gold" />
-              <h3 className="text-2xl font-serif mb-2 group-hover:text-club-gold transition-colors">
-                Manage Drops
-              </h3>
-              <p className="text-club-cream/70">Edit existing drops</p>
-            </motion.div>
-          </Link>
-
-          <Link href="/admin/guests">
-            <motion.div
-              className="bg-club-gold/20 border-2 border-club-gold p-8 cursor-pointer group hover:bg-club-gold/30 transition-all"
-              whileHover={{ scale: 1.02 }}
-            >
-              <Users className="w-12 h-12 mb-4 text-club-gold" />
-              <h3 className="text-2xl font-serif mb-2 group-hover:text-club-gold transition-colors">
-                Guest Lists
-              </h3>
-              <p className="text-club-cream/70">Manage RSVPs</p>
-            </motion.div>
-          </Link>
-
-          <Link href="/admin/prompts">
-            <motion.div
-              className="bg-club-lilac/20 border-2 border-club-lilac p-8 cursor-pointer group hover:bg-club-lilac/30 transition-all"
-              whileHover={{ scale: 1.02 }}
-            >
-              <MessageCircle className="w-12 h-12 mb-4 text-club-gold" />
-              <h3 className="text-2xl font-serif mb-2 group-hover:text-club-gold transition-colors">
-                Prompts
-              </h3>
-              <p className="text-club-cream/70">Conversation starters</p>
-            </motion.div>
-          </Link>
-
-          <Link href="/checkin">
-            <motion.div
-              className="bg-club-blue/20 border-2 border-club-blue p-8 cursor-pointer group hover:bg-club-blue/30 transition-all"
-              whileHover={{ scale: 1.02 }}
-            >
-              <QrCode className="w-12 h-12 mb-4 text-club-gold" />
-              <h3 className="text-2xl font-serif mb-2 group-hover:text-club-gold transition-colors">
-                Check-In
-              </h3>
-              <p className="text-club-cream/70">Scan QR codes</p>
-            </motion.div>
-          </Link>
-        </div>
+        <motion.div
+          className="bg-club-charcoal/30 border border-club-cream/10 p-6 rounded"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <h2 className="text-xl font-serif mb-6">Quick Actions</h2>
+          <div className="space-y-3">
+            <button className="w-full px-4 py-3 bg-club-gold text-club-blue hover:bg-club-gold/90 transition-colors rounded font-semibold text-left">
+              + Create New Drop
+            </button>
+            <button className="w-full px-4 py-3 border border-club-cream/30 hover:bg-club-cream/5 transition-colors rounded text-left">
+              Generate Invite Code
+            </button>
+            <button className="w-full px-4 py-3 border border-club-cream/30 hover:bg-club-cream/5 transition-colors rounded text-left">
+              Export Guest List
+            </button>
+            <button className="w-full px-4 py-3 border border-club-cream/30 hover:bg-club-cream/5 transition-colors rounded text-left">
+              View Analytics Report
+            </button>
+          </div>
+        </motion.div>
       </div>
     </div>
   )
