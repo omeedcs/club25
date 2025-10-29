@@ -40,8 +40,12 @@ export default function AuthCallbackPage() {
             email: data.user?.email
           })
 
+          // Wait a moment to ensure session is fully persisted
+          await new Promise(resolve => setTimeout(resolve, 500))
+
           // Get redirect destination
           const next = searchParams.get('next') || '/admin'
+          console.log('Redirecting to:', next)
           router.push(next)
         } else {
           console.log('No tokens in hash, checking for existing session')

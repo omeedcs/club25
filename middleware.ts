@@ -30,15 +30,23 @@ export async function middleware(req: NextRequest) {
     }
 
     // Check if user is admin
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('email')
-      .eq('id', session.user.id)
-      .single()
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL
+    const userEmail = session.user.email
+    
+    console.log('Admin check:', {
+      userEmail,
+      adminEmail,
+      isAdmin: userEmail === adminEmail
+    })
 
-    const adminEmail = process.env.ADMIN_EMAIL
-    if (profile?.email !== adminEmail) {
+    if (adminEmail && userEmail !== adminEmail) {
+      console.log('User is not admin, redirecting to home')
       return NextResponse.redirect(new URL('/', req.url))
+    }
+    
+    // If no admin email is set, allow anyone authenticated (dev mode)
+    if (!adminEmail) {
+      console.warn('⚠️ WARNING: ADMIN_EMAIL not set - allowing all authenticated users to access admin!')
     }
   }
 
