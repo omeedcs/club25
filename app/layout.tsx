@@ -5,8 +5,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Club25 — Curated Dinner Experiences',
-  description: 'Intimate supper club events in Dallas, TX. Every two weeks, a new chapter.',
+  title: 'Club25 — Invitation Only',
+  description: 'An intimate supper club. 25 seats. One secret location. Every two weeks, a new chapter unfolds in Dallas.',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -14,6 +14,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: '/logo.png',
+  },
+  openGraph: {
+    title: 'Club25 — You\'ve Been Invited',
+    description: 'An intimate dining experience. 25 seats. One secret location.',
+    type: 'website',
   },
 }
 
