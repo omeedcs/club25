@@ -1,7 +1,23 @@
 import { Resend } from 'resend'
+import {
+  emailWrapper,
+  buttonPrimary,
+  buttonSecondary,
+  confirmationCodeBox,
+  infoBox,
+  divider,
+  statusBadge
+} from './email-templates'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+const FROM_EMAIL = process.env.EMAIL_FROM || 'Club25 <hello@club25.co>'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
+/**
+ * Send RSVP Confirmation Email
+ * Beautiful, mobile-optimized confirmation with direct ticket link
+ */
 export async function sendRSVPConfirmation({
   to,
   name,
@@ -17,323 +33,330 @@ export async function sendRSVPConfirmation({
   status: 'confirmed' | 'waitlist'
   confirmationCode: string
 }) {
-  const subject = status === 'confirmed' 
-    ? `Your seat at ${dropTitle} is confirmed` 
-    : `You're on the waitlist for ${dropTitle}`
+  const isConfirmed = status === 'confirmed'
+  
+  const subject = isConfirmed 
+    ? `✓ You're in: ${dropTitle}`
+    : `On waitlist: ${dropTitle}`
 
-  const html = `
-    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-    <html xmlns="http://www.w3.org/1999/xhtml">
-      <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-      </head>
-      <body style="margin: 0; padding: 0; background-color: #0047BB; font-family: Georgia, 'Times New Roman', serif;">
-        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #0047BB; padding: 40px 20px;">
-          <tr>
-            <td align="center">
-              <table border="0" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px;">
-                
-                <!-- Logo Header -->
-                <tr>
-                  <td align="center" style="padding: 0 0 40px 0;">
-                    <h1 style="margin: 0; font-size: 56px; font-weight: 400; color: #F9F7F3; letter-spacing: 4px; font-family: Georgia, 'Times New Roman', serif;">
-                      club25
-                    </h1>
-                  </td>
-                </tr>
-                
-                <!-- Main Content Box -->
-                <tr>
-                  <td style="background-color: #1E1E1E; padding: 40px; border: 1px solid #4A3E8E;">
-                    
-                    <!-- Status Badge -->
-                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td style="padding-bottom: 20px;">
-                          <p style="margin: 0; font-size: 11px; letter-spacing: 3px; color: #C7A977; font-weight: bold;">
-                            ${status === 'confirmed' ? '✓ CONFIRMED' : '⏱ WAITLIST'}
-                          </p>
-                        </td>
-                      </tr>
-                    </table>
-                    
-                    <!-- Event Title -->
-                    <h2 style="margin: 0 0 15px 0; font-size: 32px; font-weight: 400; color: #F9F7F3; line-height: 1.2;">
-                      ${dropTitle}
-                    </h2>
-                    
-                    <!-- Event Date -->
-                    <p style="margin: 0 0 30px 0; font-size: 16px; color: #B8B8B8; line-height: 1.5;">
-                      ${dropDate}
-                    </p>
-                    
-                    ${status === 'confirmed' ? `
-                      <!-- Confirmed Message -->
-                      <p style="margin: 0 0 30px 0; font-size: 15px; color: #F9F7F3; line-height: 1.7;">
-                        Hi ${name},<br/><br/>
-                        Your seat is confirmed. Save your confirmation code below — you'll need it to check in.<br/><br/>
-                        This is not just dinner — it's a curated experience. Come ready to connect, taste, and discover.
-                      </p>
-                      
-                      <!-- Confirmation Code Box -->
-                      <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                        <tr>
-                          <td style="background-color: #0A1F44; padding: 30px; text-align: center; margin: 30px 0;">
-                            <p style="margin: 0 0 12px 0; font-size: 11px; letter-spacing: 3px; color: #C7A977; font-weight: bold;">
-                              YOUR CONFIRMATION CODE
-                            </p>
-                            <p style="margin: 0; font-size: 36px; font-family: 'Courier New', monospace; font-weight: bold; color: #C7A977; letter-spacing: 2px;">
-                              ${confirmationCode}
-                            </p>
-                          </td>
-                        </tr>
-                      </table>
+  const preheader = isConfirmed
+    ? `Code ${confirmationCode} • Tap to view your ticket with QR code`
+    : `We'll notify you immediately if a seat opens`
 
-                      <!-- QR Code Info -->
-                      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px;">
-                        <tr>
-                          <td style="background-color: #0A1F44; padding: 25px; text-align: center; border: 1px solid #C7A977;">
-                            <p style="margin: 0 0 8px 0; font-size: 13px; color: #C7A977; font-weight: bold;">
-                              📱 QR CODE FOR CHECK-IN
-                            </p>
-                            <p style="margin: 0; font-size: 14px; color: #B8B8B8; line-height: 1.6;">
-                              Your QR code is available on your confirmation page.<br/>
-                              Save it to your phone or screenshot it before arrival.
-                            </p>
-                          </td>
-                        </tr>
-                      </table>
-                      
-                      <!-- View Confirmation Button -->
-                      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px;">
-                        <tr>
-                          <td align="center">
-                            <table border="0" cellpadding="0" cellspacing="0">
-                              <tr>
-                                <td align="center" style="background-color: #0047BB; border-radius: 4px;">
-                                  <a href="${process.env.NEXT_PUBLIC_APP_URL}/confirmation/${confirmationCode}" 
-                                     style="display: inline-block; padding: 16px 40px; font-size: 13px; color: #F9F7F3; text-decoration: none; font-weight: bold; letter-spacing: 2px;">
-                                    VIEW QR CODE & DETAILS
-                                  </a>
-                                </td>
-                              </tr>
-                            </table>
-                          </td>
-                        </tr>
-                      </table>
-                    ` : `
-                      <!-- Waitlist Message -->
-                      <p style="margin: 0; font-size: 15px; color: #F9F7F3; line-height: 1.7;">
-                        Hi ${name},<br/><br/>
-                        We're currently at capacity, but you're on the priority waitlist. If a spot opens, you'll be the first to know.<br/><br/>
-                        We'll keep you posted.
-                      </p>
-                    `}
-                    
-                    <!-- Footer -->
-                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #333333;">
-                      <tr>
-                        <td>
-                          <p style="margin: 0; font-size: 13px; color: #888888; line-height: 1.6;">
-                            Questions? Reply to this email.<br/>
-                            — The Club25 Team
-                          </p>
-                        </td>
-                      </tr>
-                    </table>
-                    
-                  </td>
-                </tr>
-                
-              </table>
-            </td>
-          </tr>
-        </table>
-      </body>
-    </html>
+  const ticketUrl = `${APP_URL}/my-ticket?code=${confirmationCode}`
+
+  const content = `
+    ${statusBadge(status)}
+    
+    <h2 style="margin: 0 0 16px 0; font-size: 32px; font-weight: 400; color: #fffcf7; line-height: 1.2; font-family: Georgia, 'Times New Roman', serif;">
+      ${dropTitle}
+    </h2>
+    
+    <p style="margin: 0 0 24px 0; font-size: 16px; color: #B8B8B8; line-height: 1.5;">
+      ${dropDate}
+    </p>
+    
+    ${isConfirmed ? `
+      <p style="margin: 0 0 24px 0; font-size: 16px; color: #fffcf7; line-height: 1.7;">
+        ${name}, your seat is confirmed.
+      </p>
+      
+      <p style="margin: 0 0 32px 0; font-size: 15px; color: #B8B8B8; line-height: 1.7;">
+        This isn't just dinner—it's a curated experience. 25 seats. One night. Come ready to connect, taste, and discover something unexpected.
+      </p>
+      
+      ${confirmationCodeBox(confirmationCode)}
+      
+      ${infoBox('📱', 'Your QR Code is Ready', 'Tap the button below to access your ticket. Show the QR code at the door for instant check-in. Save it to your phone—it works offline.')}
+      
+      ${buttonPrimary('View Ticket & QR Code', ticketUrl)}
+      
+      ${divider()}
+      
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+          <td style="padding: 24px; background-color: rgba(0, 74, 173, 0.2); border-radius: 6px; border-left: 3px solid #D4AF37;">
+            <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: bold; color: #D4AF37;">
+              What to expect:
+            </p>
+            <p style="margin: 0; font-size: 14px; color: #B8B8B8; line-height: 1.6;">
+              • Location revealed 24 hours before<br/>
+              • Dress code: Smart casual<br/>
+              • Doors open 15 minutes early<br/>
+              • Dietary restrictions accommodated
+            </p>
+          </td>
+        </tr>
+      </table>
+      
+      <p style="margin: 32px 0 0 0; font-size: 13px; color: #888; line-height: 1.6; text-align: center;">
+        See you soon.<br/>
+        <span style="color: #D4AF37;">—</span> Club25
+      </p>
+    ` : `
+      <p style="margin: 0 0 24px 0; font-size: 16px; color: #fffcf7; line-height: 1.7;">
+        ${name}, we're at capacity right now.
+      </p>
+      
+      <p style="margin: 0 0 32px 0; font-size: 15px; color: #B8B8B8; line-height: 1.7;">
+        You're on our priority waitlist. If someone cancels, you'll be the first to know. We'll send you an instant notification with 24 hours to claim your seat.
+      </p>
+      
+      ${confirmationCodeBox(confirmationCode)}
+      
+      ${infoBox('⏱', 'You&rsquo;re on the list', 'Keep this confirmation code. If a seat opens, you&rsquo;ll need it to complete your RSVP.')}
+      
+      <p style="margin: 32px 0 0 0; font-size: 13px; color: #888; line-height: 1.6; text-align: center;">
+        We'll keep you posted.<br/>
+        <span style="color: #D4AF37;">—</span> Club25
+      </p>
+    `}
   `
 
+  const html = emailWrapper(content, preheader)
+
   return await resend.emails.send({
-    from: 'Club25 <onboarding@resend.dev>',
+    from: FROM_EMAIL,
     to,
     subject,
     html,
   })
 }
 
+/**
+ * Send 24h Check-in Reminder
+ * Includes location reveal and QR code link
+ */
 export async function sendCheckInReminder({
   to,
   name,
   dropTitle,
   dropDate,
-  qrCode,
+  dropLocation,
+  confirmationCode,
 }: {
   to: string
   name: string
   dropTitle: string
   dropDate: string
-  qrCode: string
+  dropLocation: string
+  confirmationCode: string
 }) {
+  const subject = `🌃 Tomorrow: ${dropTitle}`
+  const preheader = `Location revealed: ${dropLocation}. Your QR code is ready.`
+  const ticketUrl = `${APP_URL}/my-ticket?code=${confirmationCode}`
+
+  const content = `
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+      <tr>
+        <td style="background-color: rgba(212, 175, 55, 0.15); padding: 8px 16px; border-radius: 20px;">
+          <p style="margin: 0; font-size: 11px; letter-spacing: 2px; color: #D4AF37; font-weight: bold;">
+            🌃 TOMORROW NIGHT
+          </p>
+        </td>
+      </tr>
+    </table>
+    
+    <h2 style="margin: 0 0 16px 0; font-size: 32px; font-weight: 400; color: #fffcf7; line-height: 1.2; font-family: Georgia, 'Times New Roman', serif;">
+      ${dropTitle}
+    </h2>
+    
+    <p style="margin: 0 0 8px 0; font-size: 16px; color: #B8B8B8;">
+      ${dropDate}
+    </p>
+    
+    <p style="margin: 0 0 32px 0; font-size: 20px; font-weight: bold; color: #D4AF37;">
+      📍 ${dropLocation}
+    </p>
+    
+    <p style="margin: 0 0 24px 0; font-size: 16px; color: #fffcf7; line-height: 1.7;">
+      ${name}, it's happening tomorrow.
+    </p>
+    
+    <p style="margin: 0 0 32px 0; font-size: 15px; color: #B8B8B8; line-height: 1.7;">
+      The location is unlocked above. Your QR code for check-in is ready. Just show it when you arrive—no printed ticket needed.
+    </p>
+    
+    ${buttonPrimary('View QR Code', ticketUrl)}
+    
+    ${divider()}
+    
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr>
+        <td style="padding: 24px; background-color: rgba(0, 74, 173, 0.2); border-radius: 6px;">
+          <p style="margin: 0 0 12px 0; font-size: 14px; font-weight: bold; color: #fffcf7;">
+            Arrival details:
+          </p>
+          <p style="margin: 0; font-size: 14px; color: #B8B8B8; line-height: 1.8;">
+            • Doors open 15 minutes before start time<br/>
+            • Have your QR code ready<br/>
+            • Smart casual dress code<br/>
+            • Be ready for something special
+          </p>
+        </td>
+      </tr>
+    </table>
+    
+    <p style="margin: 32px 0 0 0; font-size: 13px; color: #888; line-height: 1.6; text-align: center;">
+      See you tomorrow.<br/>
+      <span style="color: #D4AF37;">—</span> Club25
+    </p>
+  `
+
+  const html = emailWrapper(content, preheader)
+
   return await resend.emails.send({
-    from: 'Club25 <onboarding@resend.dev>',
+    from: FROM_EMAIL,
     to,
-    subject: `Tomorrow night: ${dropTitle}`,
-    html: `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Georgia, serif; color: #F9F7F3; background: #0047BB; padding: 40px; }
-            .container { max-width: 600px; margin: 0 auto; }
-            .content { background: #1E1E1E; padding: 40px; border: 1px solid #4A3E8E; text-align: center; }
-            .qr { margin: 30px 0; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="content">
-              <p style="font-size: 12px; letter-spacing: 0.2em; color: #C7A977;">TOMORROW NIGHT</p>
-              <h2 style="font-size: 36px; margin: 20px 0;">${dropTitle}</h2>
-              <p style="font-size: 18px; color: rgba(249, 247, 243, 0.7);">${dropDate}</p>
-              
-              <div class="qr">
-                <p style="margin-bottom: 20px;">Your check-in QR code:</p>
-                <img src="${qrCode}" alt="QR Code" width="200" height="200" />
-              </div>
-              
-              <p style="font-size: 16px; line-height: 1.6; margin-top: 30px;">
-                Hi ${name},<br><br>
-                Show this QR code when you arrive. See you tomorrow.
-              </p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `,
+    subject,
+    html,
   })
 }
 
+/**
+ * Send Waitlist Alert
+ * When a seat opens up
+ */
+export async function sendWaitlistAlert({
+  to,
+  name,
+  dropTitle,
+  dropDate,
+  confirmationCode,
+}: {
+  to: string
+  name: string
+  dropTitle: string
+  dropDate: string
+  confirmationCode: string
+}) {
+  const subject = `🎉 A seat opened: ${dropTitle}`
+  const preheader = `You have 24 hours to claim your seat. Don't miss it!`
+  const claimUrl = `${APP_URL}/my-ticket?code=${confirmationCode}`
+
+  const content = `
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+      <tr>
+        <td style="background: linear-gradient(135deg, #D4AF37 0%, #f4d784 100%); padding: 12px 20px; border-radius: 20px;">
+          <p style="margin: 0; font-size: 12px; letter-spacing: 2px; color: #1E1E1E; font-weight: bold;">
+            🎉 SEAT AVAILABLE
+          </p>
+        </td>
+      </tr>
+    </table>
+    
+    <h2 style="margin: 0 0 16px 0; font-size: 32px; font-weight: 400; color: #fffcf7; line-height: 1.2; font-family: Georgia, 'Times New Roman', serif;">
+      ${dropTitle}
+    </h2>
+    
+    <p style="margin: 0 0 32px 0; font-size: 16px; color: #B8B8B8;">
+      ${dropDate}
+    </p>
+    
+    <p style="margin: 0 0 24px 0; font-size: 18px; font-weight: bold; color: #fffcf7; line-height: 1.5;">
+      ${name}, you're off the waitlist.
+    </p>
+    
+    <p style="margin: 0 0 32px 0; font-size: 15px; color: #B8B8B8; line-height: 1.7;">
+      A seat just opened and it's yours—but you need to claim it within the next 24 hours or it goes to the next person on the list.
+    </p>
+    
+    ${infoBox('⏰', '24-Hour Window', 'Claim your seat now. After 24 hours, this spot will be offered to someone else.')}
+    
+    ${buttonPrimary('Claim My Seat', claimUrl)}
+    
+    ${buttonSecondary('View Event Details', `${APP_URL}/drop/${dropTitle.toLowerCase().replace(/\s+/g, '-')}`)}
+    
+    <p style="margin: 32px 0 0 0; font-size: 13px; color: #888; line-height: 1.6; text-align: center;">
+      Don't wait—claim it now.<br/>
+      <span style="color: #D4AF37;">—</span> Club25
+    </p>
+  `
+
+  const html = emailWrapper(content, preheader)
+
+  return await resend.emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject,
+    html,
+  })
+}
+
+/**
+ * Send Post-Event Recap
+ * After the event with photos and memories
+ */
 export async function sendRecap({
   to,
   name,
   dropTitle,
-  receiptCode,
   galleryUrl,
   quotes,
 }: {
   to: string
   name: string
   dropTitle: string
-  receiptCode: string
   galleryUrl: string
   quotes: string[]
 }) {
-  return await resend.emails.send({
-    from: 'Club25 <onboarding@resend.dev>',
-    to,
-    subject: `Last night: ${dropTitle}`,
-    html: `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Georgia, serif; color: #F9F7F3; background: #0047BB; padding: 40px; }
-            .container { max-width: 600px; margin: 0 auto; }
-            .content { background: #1E1E1E; padding: 40px; border: 1px solid #4A3E8E; }
-            .quote { font-style: italic; color: #4A3E8E; margin: 20px 0; padding: 20px; border-left: 3px solid #C7A977; }
-            .receipt { background: rgba(0, 71, 187, 0.1); padding: 20px; text-align: center; margin: 30px 0; }
-            .button { background: #0047BB; color: #F9F7F3; padding: 16px 48px; text-decoration: none; display: inline-block; margin: 20px 0; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="content">
-              <h2 style="font-size: 36px; margin: 0 0 20px 0;">${dropTitle}</h2>
-              <p style="font-size: 16px; line-height: 1.6;">
-                Hi ${name},<br><br>
-                Last night was something special. Here's what people said:
-              </p>
-              
-              ${quotes.map(q => `<div class="quote">"${q}"</div>`).join('')}
-              
-              <div class="receipt">
-                <p style="font-size: 12px; letter-spacing: 0.2em; color: #C7A977; margin-bottom: 10px;">
-                  YOUR DIGITAL RECEIPT
-                </p>
-                <p style="font-size: 24px; font-weight: bold; margin: 0;">
-                  ${receiptCode}
-                </p>
-              </div>
-              
-              <p style="font-size: 16px; line-height: 1.6;">
-                View photos from the night and add your own:
-              </p>
-              
-              <a href="${galleryUrl}" class="button">
-                View Gallery
-              </a>
-              
-              <p style="font-size: 14px; color: rgba(249, 247, 243, 0.5); margin-top: 40px;">
-                The next drop is coming soon. We'll let you know first.
-              </p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `,
-  })
-}
+  const subject = `✨ Last night: ${dropTitle}`
+  const preheader = `Relive the moments. View photos and share your favorites.`
 
-export async function sendWaitlistAlert({
-  to,
-  name,
-  dropTitle,
-  dropDate,
-}: {
-  to: string
-  name: string
-  dropTitle: string
-  dropDate: string
-}) {
+  const content = `
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+      <tr>
+        <td style="background-color: rgba(212, 175, 55, 0.15); padding: 8px 16px; border-radius: 20px;">
+          <p style="margin: 0; font-size: 11px; letter-spacing: 2px; color: #D4AF37; font-weight: bold;">
+            ✨ LAST NIGHT
+          </p>
+        </td>
+      </tr>
+    </table>
+    
+    <h2 style="margin: 0 0 32px 0; font-size: 32px; font-weight: 400; color: #fffcf7; line-height: 1.2; font-family: Georgia, 'Times New Roman', serif;">
+      ${dropTitle}
+    </h2>
+    
+    <p style="margin: 0 0 32px 0; font-size: 16px; color: #fffcf7; line-height: 1.7;">
+      ${name}, last night was something special.
+    </p>
+    
+    ${quotes.length > 0 ? `
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 32px 0;">
+        ${quotes.slice(0, 3).map(quote => `
+          <tr>
+            <td style="padding: 20px; margin-bottom: 16px; background-color: rgba(74, 62, 142, 0.2); border-left: 3px solid #D4AF37; border-radius: 4px;">
+              <p style="margin: 0; font-size: 15px; font-style: italic; color: #B8B8B8; line-height: 1.6;">
+                "${quote}"
+              </p>
+            </td>
+          </tr>
+        `).join('')}
+      </table>
+    ` : ''}
+    
+    <p style="margin: 32px 0; font-size: 15px; color: #B8B8B8; line-height: 1.7;">
+      The photos from last night are now live. View the gallery, download your favorites, and share your own moments from the evening.
+    </p>
+    
+    ${buttonPrimary('View Photo Gallery', galleryUrl)}
+    
+    ${divider()}
+    
+    <p style="margin: 32px 0 0 0; font-size: 14px; color: #888; line-height: 1.7; text-align: center;">
+      The next drop is coming soon.<br/>
+      You'll be the first to know.<br/><br/>
+      <span style="color: #D4AF37;">—</span> Club25
+    </p>
+  `
+
+  const html = emailWrapper(content, preheader)
+
   return await resend.emails.send({
-    from: 'Club25 <onboarding@resend.dev>',
+    from: FROM_EMAIL,
     to,
-    subject: `A seat just opened: ${dropTitle}`,
-    html: `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Georgia, serif; color: #F9F7F3; background: #0047BB; padding: 40px; }
-            .container { max-width: 600px; margin: 0 auto; }
-            .content { background: #1E1E1E; padding: 40px; border: 1px solid #4A3E8E; }
-            .button { background: #C7A977; color: #1E1E1E; padding: 16px 48px; text-decoration: none; display: inline-block; margin: 20px 0; font-weight: bold; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="content">
-              <p style="font-size: 12px; letter-spacing: 0.2em; color: #C7A977; margin-bottom: 20px;">
-                A SEAT JUST OPENED
-              </p>
-              <h2 style="font-size: 36px; margin: 0 0 20px 0;">${dropTitle}</h2>
-              <p style="font-size: 18px; color: rgba(249, 247, 243, 0.7); margin-bottom: 30px;">
-                ${dropDate}
-              </p>
-              
-              <p style="font-size: 16px; line-height: 1.6;">
-                Hi ${name},<br><br>
-                You're off the waitlist. Claim your seat in the next 24 hours or it goes to the next person.
-              </p>
-              
-              <a href="${process.env.NEXT_PUBLIC_APP_URL}/confirm-waitlist" class="button">
-                Claim My Seat
-              </a>
-            </div>
-          </div>
-        </body>
-      </html>
-    `,
+    subject,
+    html,
   })
 }
