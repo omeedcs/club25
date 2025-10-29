@@ -3,12 +3,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase/client'
-import { Sparkles, Users, MessageCircle, Music, Camera, Heart, Send, ChefHat, Zap, Image as ImageIcon, Wifi, Trophy, Target, Vote, MapPin, TrendingUp, PartyPopper, Gamepad2, Link2, Upload, ThumbsUp, Play, X, CheckCircle2 } from 'lucide-react'
+import { Sparkles, Users, MessageCircle, Music, Camera, Heart, Send, ChefHat, Zap, Image as ImageIcon, Wifi, Trophy, Target, Vote, MapPin, TrendingUp, PartyPopper, Gamepad2, Link2, Upload, ThumbsUp, Play, X, CheckCircle2, Bell, UtensilsCrossed, Info } from 'lucide-react'
 import Image from 'next/image'
 
 type Game = 'two-truths' | 'rapid-fire' | 'would-rather' | 'hot-seat' | null
 type Challenge = { id: string; text: string; points: number; completed: boolean }
-type ViewType = 'home' | 'connect' | 'games' | 'album' | 'challenges'
+type KitchenUpdate = { id: string; message: string; created_at: string; type: 'info' | 'alert' | 'course' }
+type MenuItem = { name: string; items: string[]; description?: string; tips?: string[] }
+type ViewType = 'home' | 'connect' | 'games' | 'album' | 'challenges' | 'kitchen' | 'menu'
 
 export default function ExperiencePage({ params }: { params: { code: string } }) {
   // Core data
@@ -41,6 +43,8 @@ export default function ExperiencePage({ params }: { params: { code: string } })
   const [capturingBeReal, setCapturingBeReal] = useState(false)
   const [photoLikes, setPhotoLikes] = useState<Record<string, number>>({})
   const [realMojis, setRealMojis] = useState<Record<string, string[]>>({})
+  const [kitchenUpdates, setKitchenUpdates] = useState<KitchenUpdate[]>([])
+  const [selectedMenuItem, setSelectedMenuItem] = useState<string | null>(null)
   const frontCameraRef = useRef<HTMLVideoElement>(null)
   const backCameraRef = useRef<HTMLVideoElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -155,20 +159,27 @@ export default function ExperiencePage({ params }: { params: { code: string } })
       
       setActiveGuests(new Set(presenceData?.map(p => p.user_id) || []))
 
-      const { data: photosData } = await supabase
+      const { data: photoData } = await supabase
         .from('media')
         .select('*')
         .eq('drop_id', rsvpData.drop_id)
         .eq('type', 'photo')
-        .eq('approved', true)
         .order('created_at', { ascending: false })
-        .limit(50)
-      
-      setPhotos(photosData || [])
 
+      setPhotos(photoData || [])
+
+      // Load kitchen updates
+      const { data: kitchenData } = await supabase
+        .from('kitchen_updates')
+        .select('*')
+        .eq('drop_id', rsvpData.drop_id)
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      setKitchenUpdates(kitchenData || [])
+      setLoading(false)
     } catch (error) {
       console.error('Error loading experience:', error)
-    } finally {
       setLoading(false)
     }
   }
@@ -222,10 +233,23 @@ export default function ExperiencePage({ params }: { params: { code: string } })
       })
       .subscribe()
 
+    const kitchenChannel = supabase
+      .channel('kitchen_updates')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'kitchen_updates',
+        filter: `drop_id=eq.${rsvp?.drop_id}`
+      }, (payload) => {
+        setKitchenUpdates(prev => [payload.new as KitchenUpdate, ...prev])
+      })
+      .subscribe()
+
     return () => {
       phaseChannel.unsubscribe()
       photosChannel.unsubscribe()
       presenceChannel.unsubscribe()
+      kitchenChannel.unsubscribe()
     }
   }
 
@@ -497,25 +521,38 @@ export default function ExperiencePage({ params }: { params: { code: string } })
             </motion.div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-2 gap-4">
-              <button onClick={() => setCurrentView('connect')} className="bg-gradient-to-br from-club-lilac/30 to-club-lilac/10 border-2 border-club-lilac/50 p-6 rounded-xl">
-                <Wifi className="w-8 h-8 text-club-lilac mb-2 animate-pulse" />
-                <h3 className="font-semibold mb-1">Proximity Map</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={() => setCurrentView('kitchen')} className="bg-gradient-to-br from-orange-500/30 to-orange-500/10 border-2 border-orange-500/50 p-4 rounded-xl relative">
+                <ChefHat className="w-7 h-7 text-orange-400 mb-2" />
+                <h3 className="font-semibold mb-1 text-sm">Kitchen Updates</h3>
+                <p className="text-xs text-club-cream/60">{kitchenUpdates.length} updates</p>
+                {kitchenUpdates.length > 0 && (
+                  <div className="absolute top-2 right-2 w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
+                )}
+              </button>
+              <button onClick={() => setCurrentView('menu')} className="bg-gradient-to-br from-club-blue/40 to-club-blue/20 border-2 border-club-blue/60 p-4 rounded-xl">
+                <UtensilsCrossed className="w-7 h-7 text-club-cream mb-2" />
+                <h3 className="font-semibold mb-1 text-sm">Tonight's Menu</h3>
+                <p className="text-xs text-club-cream/60">3 courses</p>
+              </button>
+              <button onClick={() => setCurrentView('connect')} className="bg-gradient-to-br from-club-lilac/30 to-club-lilac/10 border-2 border-club-lilac/50 p-4 rounded-xl">
+                <Wifi className="w-7 h-7 text-club-lilac mb-2 animate-pulse" />
+                <h3 className="font-semibold mb-1 text-sm">Proximity Map</h3>
                 <p className="text-xs text-club-cream/60">{nearbyGuests.size} nearby</p>
               </button>
-              <button onClick={() => setCurrentView('games')} className="bg-gradient-to-br from-club-gold/30 to-club-gold/10 border-2 border-club-gold/50 p-6 rounded-xl">
-                <Gamepad2 className="w-8 h-8 text-club-gold mb-2" />
-                <h3 className="font-semibold mb-1">Play Games</h3>
+              <button onClick={() => setCurrentView('games')} className="bg-gradient-to-br from-club-gold/30 to-club-gold/10 border-2 border-club-gold/50 p-4 rounded-xl">
+                <Gamepad2 className="w-7 h-7 text-club-gold mb-2" />
+                <h3 className="font-semibold mb-1 text-sm">Play Games</h3>
                 <p className="text-xs text-club-cream/60">Icebreakers</p>
               </button>
-              <button onClick={() => setCurrentView('album')} className="bg-gradient-to-br from-club-cream/20 to-club-cream/5 border-2 border-club-cream/30 p-6 rounded-xl">
-                <Camera className="w-8 h-8 text-club-cream mb-2" />
-                <h3 className="font-semibold mb-1">BeReal Moments</h3>
+              <button onClick={() => setCurrentView('album')} className="bg-gradient-to-br from-club-cream/20 to-club-cream/5 border-2 border-club-cream/30 p-4 rounded-xl">
+                <Camera className="w-7 h-7 text-club-cream mb-2" />
+                <h3 className="font-semibold mb-1 text-sm">BeReal Moments</h3>
                 <p className="text-xs text-club-cream/60">{photos.length} posted</p>
               </button>
-              <button onClick={() => setCurrentView('challenges')} className="bg-gradient-to-br from-green-500/20 to-green-500/5 border-2 border-green-500/40 p-6 rounded-xl">
-                <Trophy className="w-8 h-8 text-green-400 mb-2" />
-                <h3 className="font-semibold mb-1">Challenges</h3>
+              <button onClick={() => setCurrentView('challenges')} className="bg-gradient-to-br from-green-500/20 to-green-500/5 border-2 border-green-500/40 p-4 rounded-xl">
+                <Trophy className="w-7 h-7 text-green-400 mb-2" />
+                <h3 className="font-semibold mb-1 text-sm">Challenges</h3>
                 <p className="text-xs text-club-cream/60">{completedChallengesCount}/{challenges.length}</p>
               </button>
             </div>
@@ -811,6 +848,173 @@ export default function ExperiencePage({ params }: { params: { code: string } })
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Kitchen Updates View */}
+        {currentView === 'kitchen' && (
+          <div className="max-w-lg mx-auto px-4 py-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-serif">Kitchen Updates</h2>
+              <button onClick={() => setCurrentView('home')} className="text-club-cream/60 hover:text-club-cream">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="bg-orange-500/10 border border-orange-500/30 p-4 rounded-lg mb-6 text-center text-sm">
+              <Bell className="w-5 h-5 inline mr-2 text-orange-400" />
+              Live updates from your hosts throughout the evening
+            </div>
+
+            <div className="space-y-3">
+              {kitchenUpdates.length === 0 && (
+                <div className="text-center py-12 text-club-cream/50">
+                  <ChefHat className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No updates yet - stay tuned!</p>
+                </div>
+              )}
+              {kitchenUpdates.map((update) => (
+                <motion.div
+                  key={update.id}
+                  className={`p-4 rounded-lg border-2 ${
+                    update.type === 'alert' ? 'bg-orange-500/20 border-orange-500/50' :
+                    update.type === 'course' ? 'bg-club-gold/20 border-club-gold/50' :
+                    'bg-club-charcoal/40 border-club-cream/20'
+                  }`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                >
+                  <div className="flex items-start gap-3">
+                    {update.type === 'alert' && <Bell className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />}
+                    {update.type === 'course' && <UtensilsCrossed className="w-5 h-5 text-club-gold flex-shrink-0 mt-0.5" />}
+                    {update.type === 'info' && <Info className="w-5 h-5 text-club-lilac flex-shrink-0 mt-0.5" />}
+                    <div className="flex-1">
+                      <p className="text-sm leading-relaxed">{update.message}</p>
+                      <div className="text-xs text-club-cream/50 mt-2">
+                        {new Date(update.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Interactive Menu View */}
+        {currentView === 'menu' && (
+          <div className="max-w-lg mx-auto px-4 py-6">
+            <button 
+              onClick={() => setCurrentView('home')} 
+              className="mb-4 text-club-cream/60 hover:text-club-cream flex items-center gap-2"
+            >
+              <X className="w-5 h-5" />
+              <span className="text-sm">Back</span>
+            </button>
+
+            {/* Paper-like menu container */}
+            <div className="bg-amber-50 rounded-lg shadow-2xl p-8 border border-stone-200">
+              <div className="space-y-10">
+                {/* Menu Title */}
+                <div className="text-center mb-8">
+                  <h2 className="text-5xl mb-2 text-blue-900" style={{ fontFamily: 'cursive', fontWeight: 'bold' }}>Menu</h2>
+                  <div className="w-16 h-0.5 bg-blue-900/30 mx-auto"></div>
+                </div>
+
+                {/* First Course */}
+                <div className="border-b border-blue-900/20 pb-8">
+                  <h3 className="text-3xl mb-5 text-blue-900 text-center" style={{ fontFamily: 'cursive' }}>First Course</h3>
+                  <div className="space-y-3 text-center">
+                    <button
+                      onClick={() => setSelectedMenuItem(selectedMenuItem === 'burrata' ? null : 'burrata')}
+                      className="w-full p-4 hover:bg-blue-100/30 rounded-lg transition-colors"
+                    >
+                      <div className="text-blue-950 font-medium text-base" style={{ fontFamily: 'serif' }}>Burrata E Prosciutto with Roasted Figs</div>
+                      <div className="text-sm text-blue-900 italic mt-1">Crispy Balsamic Brussels Sprouts</div>
+                    </button>
+                    <AnimatePresence>
+                      {selectedMenuItem === 'burrata' && (
+                        <motion.div
+                          className="bg-white/60 p-4 rounded text-sm text-gray-800 text-left border border-blue-100"
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                        >
+                          <p className="mb-2"><strong>Description:</strong> Creamy burrata cheese paired with savory prosciutto and sweet roasted figs, complemented by crispy Brussels sprouts with a balsamic glaze.</p>
+                          <p className="text-amber-800 text-xs mt-2"><strong>Pairing tip:</strong> Best enjoyed with a light white wine or prosecco.</p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+
+                {/* Main Course */}
+                <div className="border-b border-blue-900/20 pb-8">
+                  <h3 className="text-3xl mb-5 text-blue-900 text-center" style={{ fontFamily: 'cursive' }}>Main Course</h3>
+                  <div className="space-y-3 text-center">
+                    <button
+                      onClick={() => setSelectedMenuItem(selectedMenuItem === 'lamb' ? null : 'lamb')}
+                      className="w-full p-4 hover:bg-blue-100/30 rounded-lg transition-colors"
+                    >
+                      <div className="text-blue-950 font-semibold text-base" style={{ fontFamily: 'serif' }}>Lamb Roast with Mint Sauce</div>
+                    </button>
+                    <AnimatePresence>
+                      {selectedMenuItem === 'lamb' && (
+                        <motion.div
+                          className="bg-white/60 p-4 rounded text-sm text-gray-800 text-left border border-blue-100"
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                        >
+                          <p className="mb-2"><strong>Description:</strong> Tender roasted lamb with a fresh mint sauce, perfectly seasoned and cooked to perfection.</p>
+                          <p className="text-amber-800 text-xs mt-2"><strong>Chef's note:</strong> Cooked medium-rare for optimal flavor and tenderness.</p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    <div className="text-sm italic text-blue-900 mt-4 space-y-1">
+                      <div>Rosemary Focaccia Bread</div>
+                      <div>Smashed Roasted Potatoes</div>
+                      <div>Shaved Fennel Arugula Salad</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dessert */}
+                <div className="pb-4">
+                  <h3 className="text-3xl mb-5 text-blue-900 text-center" style={{ fontFamily: 'cursive' }}>Dessert</h3>
+                  <div className="space-y-3 text-center">
+                    <button
+                      onClick={() => setSelectedMenuItem(selectedMenuItem === 'dessert' ? null : 'dessert')}
+                      className="w-full p-4 hover:bg-blue-100/30 rounded-lg transition-colors"
+                    >
+                      <div className="text-blue-950 font-medium text-base" style={{ fontFamily: 'serif' }}>Spiced Pear and Cardamom Cake</div>
+                      <div className="text-sm text-blue-900 italic mt-1">with Vanilla Ice Cream</div>
+                    </button>
+                    <AnimatePresence>
+                      {selectedMenuItem === 'dessert' && (
+                        <motion.div
+                          className="bg-white/60 p-4 rounded text-sm text-gray-800 text-left border border-blue-100"
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                        >
+                          <p className="mb-2"><strong>Description:</strong> Warm, moist cake with aromatic spices, sweet pears, and fragrant cardamom, served with creamy vanilla ice cream.</p>
+                          <p className="text-amber-800 text-xs mt-2"><strong>Perfect finale:</strong> A comforting end to an unforgettable meal.</p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Decorative wine glass illustration */}
+                  <div className="mt-8 opacity-20 flex justify-center">
+                    <svg width="50" height="70" viewBox="0 0 60 80" className="text-blue-900">
+                      <path d="M15 10 Q20 30 30 35 Q40 30 45 10 M30 35 L30 60 M20 60 L40 60" stroke="currentColor" strokeWidth="3" fill="none"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}

@@ -233,14 +233,16 @@ export default function ConfirmationPage({ params }: { params: { code: string } 
             transition={{ delay: 0.4 }}
           >
             <div className="text-sm text-club-gold mb-3 tracking-widest">DURING THE EVENT</div>
-            <h3 className="text-2xl font-serif mb-4">The Immersive Experience</h3>
+            <h3 className="text-2xl font-serif mb-4">The Ultimate Virtual Experience</h3>
             <p className="text-club-cream/70 mb-6">
-              Once you arrive, access the live experience to see conversation prompts, who's at the table, and the current course phase.
+              Once you arrive, unlock live features: auto-connect with nearby guests, capture BeReal moments, play icebreaker games, view the interactive menu, and get real-time kitchen updates.
             </p>
-            <Link href={`/experience/${params.code}`}>
-              <button className="px-8 py-3 bg-club-blue text-club-cream hover:bg-club-lilac transition-colors">
-                ACCESS EXPERIENCE
-              </button>
+            <Link 
+              href={`/experience/${params.code}`}
+              className="inline-flex items-center gap-3 px-8 py-4 bg-club-gold text-club-blue font-semibold rounded-lg hover:bg-club-gold/90 active:scale-95 transition-all touch-manipulation"
+            >
+              <Users className="w-5 h-5" />
+              <span>Access Experience</span>
             </Link>
           </motion.div>
         )}
