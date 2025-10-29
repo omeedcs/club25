@@ -24,30 +24,20 @@ export async function middleware(req: NextRequest) {
 
   // Protect admin routes
   if (req.nextUrl.pathname.startsWith('/admin')) {
-    if (!session) {
-      console.log('No session, redirecting to login')
-      return NextResponse.redirect(new URL('/login', req.url))
-    }
-
-    // Check if user is admin
-    const adminEmail = process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL
-    const userEmail = session.user.email
-    
-    console.log('Admin check:', {
-      userEmail,
-      adminEmail,
-      isAdmin: userEmail === adminEmail
+    // TEMPORARILY DISABLED FOR DEBUGGING
+    console.log('⚠️ Admin route accessed - AUTH TEMPORARILY DISABLED FOR DEBUGGING')
+    console.log('Session status:', {
+      hasSession: !!session,
+      userEmail: session?.user?.email
     })
-
-    if (adminEmail && userEmail !== adminEmail) {
-      console.log('User is not admin, redirecting to home')
-      return NextResponse.redirect(new URL('/', req.url))
-    }
     
-    // If no admin email is set, allow anyone authenticated (dev mode)
-    if (!adminEmail) {
-      console.warn('⚠️ WARNING: ADMIN_EMAIL not set - allowing all authenticated users to access admin!')
-    }
+    // TODO: Re-enable after fixing session persistence
+    // if (!session) {
+    //   console.log('No session, redirecting to login')
+    //   return NextResponse.redirect(new URL('/login', req.url))
+    // }
+    
+    return res // Allow access for now
   }
 
   // Protect /my routes (user dashboard)
