@@ -46,13 +46,13 @@ export default function AudioPlayer({ audioStarted, setAudioStarted }: AudioPlay
       {/* Audio control button */}
       <button
         onClick={toggleAudio}
-        className="fixed bottom-8 right-8 z-50 bg-club-lilac/20 backdrop-blur-sm p-4 rounded-full border border-club-lilac/30 hover:bg-club-lilac/30 transition-all duration-300"
+        className="fixed bottom-6 right-6 z-50 bg-club-blue/10 backdrop-blur-sm p-3 sm:p-4 min-w-[48px] min-h-[48px] rounded-full border border-club-blue/20 hover:bg-club-blue/20 transition-all duration-300 flex items-center justify-center"
         aria-label="Toggle audio"
       >
         {audioStarted ? (
-          <Volume2 className="w-5 h-5 text-club-cream" />
+          <Volume2 className="w-5 h-5 sm:w-6 sm:h-6 text-club-blue" />
         ) : (
-          <VolumeX className="w-5 h-5 text-club-cream" />
+          <VolumeX className="w-5 h-5 sm:w-6 sm:h-6 text-club-blue/60" />
         )}
       </button>
     </>

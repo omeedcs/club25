@@ -35,11 +35,11 @@ export default function CardCascadeIntro({ setAudioStarted, onComplete }: CardCa
       style={{ pointerEvents: started ? 'none' : 'auto' }}
     >
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-club-blue via-club-lilac/20 to-club-blue" />
+      <div className="absolute inset-0 bg-gradient-to-br from-club-cream via-club-blue/5 to-club-cream" />
       
       {/* Animated glow */}
       <motion.div
-        className="absolute top-1/4 left-1/4 w-96 h-96 bg-club-lilac/30 rounded-full blur-3xl"
+        className="absolute top-1/4 left-1/4 w-64 h-64 md:w-96 md:h-96 bg-club-blue/10 rounded-full blur-3xl"
         animate={{
           scale: [1, 1.2, 1],
           opacity: [0.3, 0.5, 0.3],
@@ -74,7 +74,7 @@ export default function CardCascadeIntro({ setAudioStarted, onComplete }: CardCa
 
             {/* Tagline */}
             <motion.p
-              className="text-lg md:text-2xl text-club-cream/80 mb-12 leading-relaxed px-4"
+              className="text-base sm:text-lg md:text-2xl text-club-blue/70 mb-12 leading-relaxed px-4 max-w-2xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.6 }}
@@ -85,7 +85,7 @@ export default function CardCascadeIntro({ setAudioStarted, onComplete }: CardCa
             {/* Enter button */}
             <motion.button
               onClick={handleEnter}
-              className="px-12 py-4 border-2 border-club-cream text-club-cream hover:bg-club-cream hover:text-club-blue transition-all duration-300 text-base md:text-lg tracking-wider active:scale-95 touch-manipulation"
+              className="px-10 sm:px-12 py-3 sm:py-4 min-h-[56px] border-2 border-club-blue text-club-blue hover:bg-club-blue hover:text-club-cream transition-all duration-300 text-base md:text-lg tracking-wider active:scale-95 touch-manipulation"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.9 }}
@@ -121,8 +121,8 @@ export default function CardCascadeIntro({ setAudioStarted, onComplete }: CardCa
               ))}
             </div>
             
-            <div className="text-sm tracking-widest text-club-gold mb-4">CURRENT DROP</div>
-            <h2 className="text-6xl md:text-7xl font-serif text-club-cream">
+            <div className="text-xs sm:text-sm tracking-widest text-club-gold mb-4">CURRENT DROP</div>
+            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-serif text-club-blue">
               Tokyo Midnight
             </h2>
           </motion.div>
@@ -137,9 +137,9 @@ export default function CardCascadeIntro({ setAudioStarted, onComplete }: CardCa
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <div className="w-6 h-10 border-2 border-club-cream/50 rounded-full flex justify-center">
+          <div className="w-6 h-10 border-2 border-club-blue/30 rounded-full flex justify-center">
             <motion.div
-              className="w-1 h-2 bg-club-cream rounded-full mt-2"
+              className="w-1 h-2 bg-club-blue rounded-full mt-2"
               animate={{ y: [0, 12, 0] }}
               transition={{ duration: 1.5, repeat: Infinity }}
             />
@@ -151,7 +151,7 @@ export default function CardCascadeIntro({ setAudioStarted, onComplete }: CardCa
       {!started && (
         <motion.button
           onClick={handleEnter}
-          className="absolute bottom-8 right-8 text-club-cream/50 hover:text-club-cream text-sm tracking-wider transition-colors"
+          className="absolute bottom-8 right-8 text-club-blue/50 hover:text-club-blue text-sm tracking-wider transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5 }}
