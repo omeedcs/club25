@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-club-cream text-club-blue;
+    @apply bg-club-blue text-club-cream;
   }
 }
 
@@ -50,16 +50,16 @@ html {
 }
 
 ::-webkit-scrollbar-track {
-  background: #fffcf7;
+  background: #003080;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #004aad;
+  background: #fffcf7;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #0066dd;
+  background: #ffffff;
 }
 
 /* Mobile optimizations */

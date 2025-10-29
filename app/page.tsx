@@ -14,7 +14,7 @@ export default function Home() {
   const [introComplete, setIntroComplete] = useState(false)
 
   return (
-    <main className="relative min-h-screen bg-club-cream text-club-blue overflow-hidden">
+    <main className="relative min-h-screen bg-club-blue text-club-cream overflow-hidden">
       <AudioPlayer audioStarted={audioStarted} setAudioStarted={setAudioStarted} />
       
       {/* Subtle radial gradient overlay */}
@@ -22,7 +22,7 @@ export default function Home() {
         <div 
           className="absolute inset-0"
           style={{
-            background: 'radial-gradient(circle at 50% 0%, rgba(0, 74, 173, 0.05), transparent 60%), radial-gradient(circle at 0% 100%, rgba(0, 74, 173, 0.08), transparent 50%)',
+            background: 'radial-gradient(circle at 50% 0%, rgba(74, 62, 142, 0.15), transparent 60%), radial-gradient(circle at 0% 100%, rgba(0, 74, 173, 0.3), transparent 50%)',
           }}
         />
       </div>
