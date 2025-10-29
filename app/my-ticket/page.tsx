@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase/client'
 import QRCode from 'qrcode'
 import { Ticket, Check, Calendar, MapPin, Clock } from 'lucide-react'
 import { TicketSkeleton } from '@/components/SkeletonLoader'
+import { haptic, shareContent } from '@/lib/mobile-utils'
 
 export default function MyTicketPage() {
   const [code, setCode] = useState('')
@@ -51,10 +52,12 @@ export default function MyTicketPage() {
       if (rsvpError || !rsvpData) {
         setError('Invalid confirmation code. Please check and try again.')
         setTicket(null)
+        haptic.error()
         return
       }
 
       setTicket(rsvpData)
+      haptic.success()
       localStorage.setItem('club25_confirmation_code', confirmationCode.toUpperCase())
 
       // Generate QR code
@@ -258,19 +261,22 @@ export default function MyTicketPage() {
               {/* Actions */}
               <div className="mt-6 space-y-3">
                 <button
-                  onClick={() => {
-                    if (navigator.share && qrCodeUrl) {
-                      // Convert data URL to blob
-                      fetch(qrCodeUrl)
-                        .then(res => res.blob())
-                        .then(blob => {
-                          const file = new File([blob], 'ticket.png', { type: 'image/png' })
-                          navigator.share({
-                            title: 'My Club25 Ticket',
-                            text: `My ticket for ${ticket.drops?.title}`,
-                            files: [file]
-                          })
+                  onClick={async () => {
+                    haptic.light()
+                    if (qrCodeUrl) {
+                      try {
+                        const res = await fetch(qrCodeUrl)
+                        const blob = await res.blob()
+                        const file = new File([blob], 'club25-ticket.png', { type: 'image/png' })
+                        
+                        await shareContent({
+                          title: 'My Club25 Ticket',
+                          text: `My ticket for ${ticket.drops?.title}`,
+                          files: [file]
                         })
+                      } catch (error) {
+                        console.error('Share failed:', error)
+                      }
                     }
                   }}
                   className="w-full py-3 border border-club-cream/30 rounded-lg font-medium active:scale-95 transition-all touch-manipulation"
@@ -280,11 +286,12 @@ export default function MyTicketPage() {
 
                 <button
                   onClick={() => {
+                    haptic.light()
                     setTicket(null)
                     setCode('')
                     localStorage.removeItem('club25_confirmation_code')
                   }}
-                  className="w-full py-3 text-club-cream/70 text-sm"
+                  className="w-full py-3 text-club-cream/70 text-sm touch-manipulation"
                 >
                   View Different Ticket
                 </button>
