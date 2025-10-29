@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import CardCascadeIntro from '@/components/CardCascadeIntro'
 import CurrentChapter from '@/components/CurrentChapter'
 import Concept from '@/components/Concept'
@@ -12,9 +12,35 @@ import { motion } from 'framer-motion'
 export default function Home() {
   const [audioStarted, setAudioStarted] = useState(false)
   const [introComplete, setIntroComplete] = useState(false)
+  const [hasValidCode, setHasValidCode] = useState(false)
+
+  useEffect(() => {
+    // Check if user already has a validated code
+    const storedCode = localStorage.getItem('club25_invite_code')
+    if (storedCode) {
+      setHasValidCode(true)
+      setIntroComplete(true)
+    }
+
+    // Prevent scrolling when intro is showing
+    if (!introComplete) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [introComplete])
+
+  const handleIntroComplete = () => {
+    setHasValidCode(true)
+    setIntroComplete(true)
+  }
 
   return (
-    <main className="relative min-h-screen bg-club-blue text-club-cream overflow-hidden">
+    <main className="relative min-h-screen bg-club-blue text-club-cream overflow-x-hidden">
       <AudioPlayer audioStarted={audioStarted} setAudioStarted={setAudioStarted} />
       
       {/* Subtle radial gradient overlay */}
@@ -36,19 +62,23 @@ export default function Home() {
         }}
       />
 
-      {/* Card cascade entrance animation */}
+      {/* Card cascade entrance animation - MUST complete before content shows */}
       {!introComplete && (
         <CardCascadeIntro 
           setAudioStarted={setAudioStarted}
-          onComplete={() => setIntroComplete(true)}
+          onComplete={handleIntroComplete}
         />
       )}
       
-      {/* Main content */}
-      <CurrentChapter />
-      <Concept />
-      <Archive />
-      <Footer />
+      {/* Main content - ONLY show after code validation */}
+      {hasValidCode && introComplete && (
+        <>
+          <CurrentChapter />
+          <Concept />
+          <Archive />
+          <Footer />
+        </>
+      )}
     </main>
   )
 }

@@ -20,7 +20,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/my/drops`
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/admin`
         }
       })
 
@@ -28,7 +28,7 @@ export default function LoginPage() {
 
       setSent(true)
     } catch (err: any) {
-      setError(err.message)
+      setError(err.message || 'Failed to send magic link')
     } finally {
       setLoading(false)
     }
