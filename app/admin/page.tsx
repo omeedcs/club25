@@ -223,30 +223,30 @@ export default function EnhancedAdminDashboard() {
   ]
 
   return (
-    <div className="p-8">
+    <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-serif mb-2">Dashboard</h1>
-        <p className="text-club-cream/60">Real-time analytics and system overview</p>
+      <div className="mb-6">
+        <h1 className="text-2xl md:text-3xl lg:text-4xl font-serif mb-1 md:mb-2">Dashboard</h1>
+        <p className="text-club-cream/60 text-sm md:text-base">Real-time analytics and system overview</p>
       </div>
 
       {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
         {mainStats.map((stat, i) => {
           const Icon = stat.icon
           return (
             <motion.div
               key={stat.label}
-              className="bg-club-charcoal/30 border border-club-cream/10 p-6 rounded backdrop-blur-sm hover:border-club-cream/30 transition-all"
+              className="bg-club-charcoal/30 border border-club-cream/10 p-4 md:p-6 rounded-lg backdrop-blur-sm hover:border-club-cream/30 transition-all active:scale-95 touch-manipulation"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
             >
-              <div className="flex items-start justify-between mb-4">
-                <Icon className="w-8 h-8 text-club-gold" />
-                <span className="text-3xl font-serif text-club-cream">{stat.value}</span>
+              <div className="flex items-start justify-between mb-3 md:mb-4">
+                <Icon className="w-6 h-6 md:w-8 md:h-8 text-club-gold flex-shrink-0" />
+                <span className="text-2xl md:text-3xl font-serif text-club-cream">{stat.value}</span>
               </div>
-              <div className="text-club-cream/70 text-sm font-medium mb-1">{stat.label}</div>
+              <div className="text-club-cream/70 text-xs md:text-sm font-medium mb-1">{stat.label}</div>
               <div className="text-club-cream/50 text-xs">{stat.subtitle}</div>
             </motion.div>
           )
@@ -254,7 +254,7 @@ export default function EnhancedAdminDashboard() {
       </div>
 
       {/* Secondary Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
         {secondaryStats.map((stat, i) => (
           <motion.div
             key={stat.label}
@@ -269,60 +269,60 @@ export default function EnhancedAdminDashboard() {
         ))}
       </div>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Recent Activity & Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <motion.div
-          className="bg-club-charcoal/30 border border-club-cream/10 p-6 rounded"
+          className="bg-club-charcoal/30 border border-club-cream/10 p-4 md:p-6 rounded-lg"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.6 }}
         >
-          <div className="flex items-center gap-2 mb-6">
+          <div className="flex items-center gap-2 mb-4 md:mb-6">
             <Activity className="w-5 h-5 text-club-gold" />
-            <h2 className="text-xl font-serif">Recent Activity</h2>
+            <h2 className="text-lg md:text-xl font-serif">Recent Activity</h2>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3 md:space-y-4 max-h-80 overflow-y-auto smooth-scroll">
             {recentActivity.length > 0 ? (
               recentActivity.map((activity, i) => (
-                <div key={activity.id} className="flex items-center gap-4 text-sm border-b border-club-cream/10 pb-3">
-                  <div className="w-2 h-2 rounded-full bg-club-gold" />
-                  <div className="flex-1">
-                    <div className="text-club-cream">{activity.user}</div>
-                    <div className="text-club-cream/50 text-xs">
+                <div key={activity.id} className="flex items-center gap-3 md:gap-4 text-sm border-b border-club-cream/10 pb-3 last:border-0">
+                  <div className="w-2 h-2 rounded-full bg-club-gold flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-club-cream truncate">{activity.user}</div>
+                    <div className="text-club-cream/50 text-xs truncate">
                       {activity.type === 'rsvp' && 'Reserved for'} {activity.drop}
                     </div>
                   </div>
-                  <div className="text-xs text-club-cream/50">
-                    {new Date(activity.timestamp).toLocaleTimeString()}
+                  <div className="text-xs text-club-cream/50 flex-shrink-0">
+                    {new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
               ))
             ) : (
-              <div className="text-club-cream/50 text-center py-8">No recent activity</div>
+              <div className="text-club-cream/50 text-center py-8 text-sm">No recent activity</div>
             )}
           </div>
         </motion.div>
 
         {/* Quick Actions */}
         <motion.div
-          className="bg-club-charcoal/30 border border-club-cream/10 p-6 rounded"
+          className="bg-club-charcoal/30 border border-club-cream/10 p-4 md:p-6 rounded-lg"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.6 }}
         >
-          <h2 className="text-xl font-serif mb-6">Quick Actions</h2>
+          <h2 className="text-lg md:text-xl font-serif mb-4 md:mb-6">Quick Actions</h2>
           <div className="space-y-3">
-            <button className="w-full px-4 py-3 bg-club-gold text-club-blue hover:bg-club-gold/90 transition-colors rounded font-semibold text-left">
+            <button className="w-full px-4 py-4 bg-club-gold text-club-blue hover:bg-club-gold/90 active:scale-95 transition-all rounded-lg font-semibold text-left text-sm md:text-base touch-manipulation">
               + Create New Drop
             </button>
-            <button className="w-full px-4 py-3 border border-club-cream/30 hover:bg-club-cream/5 transition-colors rounded text-left">
+            <button className="w-full px-4 py-4 border border-club-cream/30 hover:bg-club-cream/5 active:scale-95 transition-all rounded-lg text-left text-sm md:text-base touch-manipulation">
               Generate Invite Code
             </button>
-            <button className="w-full px-4 py-3 border border-club-cream/30 hover:bg-club-cream/5 transition-colors rounded text-left">
+            <button className="w-full px-4 py-4 border border-club-cream/30 hover:bg-club-cream/5 active:scale-95 transition-all rounded-lg text-left text-sm md:text-base touch-manipulation">
               Export Guest List
             </button>
-            <button className="w-full px-4 py-3 border border-club-cream/30 hover:bg-club-cream/5 transition-colors rounded text-left">
+            <button className="w-full px-4 py-4 border border-club-cream/30 hover:bg-club-cream/5 active:scale-95 transition-all rounded-lg text-left text-sm md:text-base touch-manipulation">
               View Analytics Report
             </button>
           </div>
