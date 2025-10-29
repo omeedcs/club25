@@ -5,6 +5,7 @@ import type { NextRequest } from 'next/server'
 export async function middleware(req: NextRequest) {
   // Skip middleware for auth callback
   if (req.nextUrl.pathname.startsWith('/auth/callback')) {
+    console.log('Skipping middleware for auth callback')
     return NextResponse.next()
   }
 
@@ -15,9 +16,16 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
+  console.log('Middleware check:', {
+    path: req.nextUrl.pathname,
+    hasSession: !!session,
+    userEmail: session?.user?.email
+  })
+
   // Protect admin routes
   if (req.nextUrl.pathname.startsWith('/admin')) {
     if (!session) {
+      console.log('No session, redirecting to login')
       return NextResponse.redirect(new URL('/login', req.url))
     }
 
