@@ -7,6 +7,7 @@ import Concept from '@/components/Concept'
 import Archive from '@/components/Archive'
 import Footer from '@/components/Footer'
 import AudioPlayer from '@/components/AudioPlayer'
+import PWAInstall from '@/components/PWAInstall'
 import { motion } from 'framer-motion'
 
 export default function Home() {
@@ -42,6 +43,7 @@ export default function Home() {
   return (
     <main className="relative min-h-screen bg-club-blue text-club-cream overflow-x-hidden">
       <AudioPlayer audioStarted={audioStarted} setAudioStarted={setAudioStarted} />
+      <PWAInstall />
       
       {/* Subtle radial gradient overlay */}
       <div className="fixed inset-0 pointer-events-none">

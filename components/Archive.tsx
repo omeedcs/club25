@@ -1,17 +1,42 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 
 export default function Archive() {
   const [drops, setDrops] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [isVisible, setIsVisible] = useState(false)
+  const sectionRef = useRef<HTMLElement>(null)
+
+  // Intersection Observer for lazy loading
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true)
+        }
+      },
+      { rootMargin: '100px' }
+    )
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
+    if (!isVisible) return
+
     async function fetchArchive() {
       try {
-        const res = await fetch('/api/drops/archive', { cache: 'no-store' })
+        const res = await fetch('/api/drops/archive', { 
+          cache: 'no-store',
+          next: { revalidate: 60 }
+        })
         const data = await res.json()
         setDrops(data.drops || [])
       } catch (error) {
@@ -21,7 +46,7 @@ export default function Archive() {
       }
     }
     fetchArchive()
-  }, [])
+  }, [isVisible])
 
   if (loading) {
     return (
