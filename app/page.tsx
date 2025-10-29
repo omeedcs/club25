@@ -8,19 +8,28 @@ import Archive from '@/components/Archive'
 import Footer from '@/components/Footer'
 import AudioPlayer from '@/components/AudioPlayer'
 import PWAInstall from '@/components/PWAInstall'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Ticket } from 'lucide-react'
+import Link from 'next/link'
 
 export default function Home() {
   const [audioStarted, setAudioStarted] = useState(false)
   const [introComplete, setIntroComplete] = useState(false)
   const [hasValidCode, setHasValidCode] = useState(false)
+  const [hasConfirmationCode, setHasConfirmationCode] = useState(false)
 
   useEffect(() => {
-    // Check if user already has a validated code
+    // Check if user already has a validated invite code
     const storedCode = localStorage.getItem('club25_invite_code')
     if (storedCode) {
       setHasValidCode(true)
       setIntroComplete(true)
+    }
+
+    // Check if user has a confirmation code (from RSVP)
+    const confirmCode = localStorage.getItem('club25_confirmation_code')
+    if (confirmCode) {
+      setHasConfirmationCode(true)
     }
 
     // Prevent scrolling when intro is showing
@@ -44,6 +53,27 @@ export default function Home() {
     <main className="relative min-h-screen bg-club-blue text-club-cream overflow-x-hidden">
       <AudioPlayer audioStarted={audioStarted} setAudioStarted={setAudioStarted} />
       <PWAInstall />
+
+      {/* Floating Ticket Button - Always visible if user has RSVPed */}
+      <AnimatePresence>
+        {hasValidCode && (
+          <motion.div
+            className="fixed bottom-6 right-6 z-40"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ type: "spring", delay: 1, damping: 15 }}
+          >
+            <Link
+              href="/my-ticket"
+              className="flex items-center gap-3 bg-club-gold text-club-blue px-6 py-4 rounded-full shadow-2xl hover:shadow-club-gold/50 active:scale-95 transition-all touch-manipulation group"
+            >
+              <Ticket className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+              <span className="font-bold text-sm hidden sm:inline">My Ticket</span>
+            </Link>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* Subtle radial gradient overlay */}
       <div className="fixed inset-0 pointer-events-none">

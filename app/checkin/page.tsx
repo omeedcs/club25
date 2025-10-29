@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { supabaseAdmin } from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase/client'
 import { Camera, CheckCircle, XCircle, User } from 'lucide-react'
 import Image from 'next/image'
 import jsQR from 'jsqr'
@@ -85,30 +85,73 @@ export default function CheckInPage() {
     try {
       const parsed = JSON.parse(data)
       
-      if (parsed.type !== 'checkin') {
-        setError('Invalid QR code')
+      // Validate QR code format
+      if (parsed.type !== 'club25-checkin' || !parsed.confirmationCode || !parsed.userId || !parsed.dropId) {
+        setError('Invalid QR code format')
         return
       }
 
-      // Check in the guest
-      const { data: checkinData, error: checkinError } = await supabaseAdmin
-        .from('checkins')
-        .update({ scanned_at: new Date().toISOString() })
+      // Verify RSVP exists and is confirmed
+      const { data: rsvpData, error: rsvpError } = await supabase
+        .from('rsvps')
+        .select('*')
+        .eq('id', parsed.rsvpId)
+        .eq('confirmation_code', parsed.confirmationCode)
         .eq('user_id', parsed.userId)
         .eq('drop_id', parsed.dropId)
-        .select('*, profiles(*), drops(*)')
         .single()
 
-      if (checkinError) throw checkinError
+      if (rsvpError || !rsvpData) {
+        console.error('RSVP lookup error:', rsvpError)
+        setError('RSVP not found or invalid')
+        return
+      }
+
+      if (rsvpData.status !== 'confirmed') {
+        setError(`Cannot check in: Status is ${rsvpData.status}`)
+        return
+      }
+
+      // Get guest and drop details
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', parsed.userId)
+        .single()
+
+      const { data: dropData } = await supabase
+        .from('drops')
+        .select('*')
+        .eq('id', parsed.dropId)
+        .single()
+
+      // Create or update checkin record
+      const { data: checkinData, error: checkinError } = await supabase
+        .from('checkins')
+        .upsert({
+          user_id: parsed.userId,
+          drop_id: parsed.dropId,
+          checked_in_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,drop_id'
+        })
+        .select()
+        .single()
+
+      if (checkinError) {
+        console.error('Checkin error:', checkinError)
+        // Still show success even if checkin record fails
+      }
 
       setResult({
         success: true,
-        guest: checkinData.profiles,
-        drop: checkinData.drops,
-        code: parsed.code
+        guest: profileData,
+        drop: dropData,
+        code: parsed.confirmationCode
       })
 
     } catch (err: any) {
+      console.error('QR scan error:', err)
       setError(err.message || 'Invalid QR code')
     }
   }

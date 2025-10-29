@@ -2,33 +2,48 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Download, X } from 'lucide-react'
+import { Download, X, Share } from 'lucide-react'
 
 export default function PWAInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [showInstall, setShowInstall] = useState(false)
+  const [isIOS, setIsIOS] = useState(false)
+  const [isStandalone, setIsStandalone] = useState(false)
 
   useEffect(() => {
+    // Check if iOS
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
+    setIsIOS(iOS)
+
+    // Check if already installed
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
+    setIsStandalone(standalone)
+
     // Register service worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch((error) => {
+      navigator.serviceWorker.register('/sw.js').then(() => {
+        console.log('Service Worker registered')
+      }).catch((error) => {
         console.log('SW registration failed:', error)
       })
     }
 
-    // Listen for install prompt
+    // Listen for install prompt (Android/Desktop)
     const handler = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e)
-      
-      // Only show if user hasn't dismissed before
-      const dismissed = localStorage.getItem('pwa_install_dismissed')
-      if (!dismissed) {
-        setTimeout(() => setShowInstall(true), 5000) // Show after 5 seconds
-      }
+      console.log('beforeinstallprompt fired')
     }
 
     window.addEventListener('beforeinstallprompt', handler)
+
+    // Show prompt after delay if not already installed
+    const dismissed = localStorage.getItem('pwa_install_dismissed')
+    if (!dismissed && !standalone) {
+      setTimeout(() => {
+        setShowInstall(true)
+      }, 8000) // Show after 8 seconds
+    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handler)
@@ -36,7 +51,15 @@ export default function PWAInstall() {
   }, [])
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return
+    if (isIOS) {
+      // iOS users need manual instructions
+      return
+    }
+
+    if (!deferredPrompt) {
+      // No prompt available, keep showing instructions
+      return
+    }
 
     deferredPrompt.prompt()
     const { outcome } = await deferredPrompt.userChoice
@@ -44,12 +67,17 @@ export default function PWAInstall() {
     if (outcome === 'accepted') {
       setDeferredPrompt(null)
       setShowInstall(false)
+      localStorage.setItem('pwa_install_dismissed', 'true')
     }
   }
 
   const handleDismiss = () => {
     setShowInstall(false)
     localStorage.setItem('pwa_install_dismissed', 'true')
+  }
+
+  if (isStandalone) {
+    return null // Already installed
   }
 
   return (
@@ -65,7 +93,7 @@ export default function PWAInstall() {
           <div className="bg-club-charcoal border-2 border-club-gold/50 rounded-lg p-4 shadow-2xl backdrop-blur-lg">
             <button
               onClick={handleDismiss}
-              className="absolute top-2 right-2 p-1 text-club-cream/50 hover:text-club-cream"
+              className="absolute top-2 right-2 p-1 text-club-cream/50 hover:text-club-cream touch-manipulation"
             >
               <X className="w-5 h-5" />
             </button>
@@ -75,20 +103,41 @@ export default function PWAInstall() {
                 <Download className="w-6 h-6 text-club-gold" />
               </div>
               
-              <div className="flex-1">
+              <div className="flex-1 pr-6">
                 <h3 className="text-club-cream font-semibold mb-1">
                   Install Club25
                 </h3>
                 <p className="text-club-cream/70 text-sm mb-3">
-                  Get faster access and save your ticket offline
+                  Quick access to your tickets • Works offline • No app store needed
                 </p>
                 
-                <button
-                  onClick={handleInstall}
-                  className="w-full py-2 bg-club-gold text-club-blue rounded-lg font-semibold text-sm active:scale-95 transition-transform touch-manipulation"
-                >
-                  Install App
-                </button>
+                {isIOS ? (
+                  // iOS Instructions
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs text-club-cream/80 bg-club-blue/30 p-2 rounded">
+                      <Share className="w-4 h-4 text-club-gold flex-shrink-0" />
+                      <span>Tap <strong>Share</strong> button below</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-club-cream/80 bg-club-blue/30 p-2 rounded">
+                      <Download className="w-4 h-4 text-club-gold flex-shrink-0" />
+                      <span>Select <strong>"Add to Home Screen"</strong></span>
+                    </div>
+                  </div>
+                ) : deferredPrompt ? (
+                  // Android/Desktop with prompt
+                  <button
+                    onClick={handleInstall}
+                    className="w-full py-3 bg-club-gold text-club-blue rounded-lg font-semibold text-sm active:scale-95 transition-transform touch-manipulation"
+                  >
+                    Install Now
+                  </button>
+                ) : (
+                  // Browser without prompt support
+                  <div className="text-xs text-club-cream/70 bg-club-blue/30 p-3 rounded">
+                    <p className="mb-1">To install:</p>
+                    <p>Open browser menu → <strong>Install app</strong> or <strong>Add to home screen</strong></p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

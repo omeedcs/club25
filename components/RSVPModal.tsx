@@ -159,7 +159,7 @@ export default function RSVPModal({ isOpen, onClose, dropSlug, chapterTitle, inv
           </form>
 
           <p className="text-xs text-club-cream/40 mt-6 text-center">
-            You&apos;ll receive a confirmation email with details.
+            You'll receive a confirmation email with details.
           </p>
         </>
       ) : (
@@ -170,12 +170,12 @@ export default function RSVPModal({ isOpen, onClose, dropSlug, chapterTitle, inv
         >
           <div className="text-4xl mb-4">{status === 'confirmed' ? '✓' : '⏱'}</div>
           <h3 className="text-3xl font-serif mb-3 text-club-cream">
-            {status === 'confirmed' ? 'You&apos;re Confirmed!' : 'You&apos;re on the Waitlist'}
+            {status === 'confirmed' ? "You're Confirmed!" : "You're on the Waitlist"}
           </h3>
           <p className="text-club-cream/60 mb-4 text-sm">
             {status === 'confirmed' 
               ? 'Check your email for your confirmation code.' 
-              : 'We&apos;ll notify you if a spot opens.'}
+              : "We'll notify you if a spot opens."}
           </p>
           <p className="text-xs text-club-cream/40 mb-6">
             Redirecting...

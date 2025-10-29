@@ -32,7 +32,10 @@ export default function MyTicketPage() {
   }, [])
 
   const lookupTicket = async (confirmationCode: string) => {
-    if (!confirmationCode || confirmationCode.length < 6) return
+    if (!confirmationCode || confirmationCode.length < 6) {
+      setError('Please enter a valid confirmation code')
+      return
+    }
 
     setLoading(true)
     setError('')
@@ -41,31 +44,58 @@ export default function MyTicketPage() {
       // Fetch RSVP with confirmation code
       const { data: rsvpData, error: rsvpError } = await supabase
         .from('rsvps')
-        .select(`
-          *,
-          drops (*),
-          profiles (*)
-        `)
+        .select('*')
         .eq('confirmation_code', confirmationCode.toUpperCase())
         .single()
 
       if (rsvpError || !rsvpData) {
-        setError('Invalid confirmation code. Please check and try again.')
+        console.error('RSVP lookup error:', rsvpError)
+        setError('Confirmation code not found. Please check your email or contact support.')
         setTicket(null)
         haptic.error()
         return
       }
 
-      setTicket(rsvpData)
+      // Fetch related drop
+      const { data: dropData } = await supabase
+        .from('drops')
+        .select('*')
+        .eq('id', rsvpData.drop_id)
+        .single()
+
+      // Fetch related profile
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', rsvpData.user_id)
+        .single()
+
+      // Combine data
+      const ticketData = {
+        ...rsvpData,
+        drops: dropData,
+        profiles: profileData
+      }
+
+      if (!ticketData.drops) {
+        setError('Event information not found. Please contact support.')
+        haptic.error()
+        return
+      }
+
+      setTicket(ticketData)
       haptic.success()
       localStorage.setItem('club25_confirmation_code', confirmationCode.toUpperCase())
 
       // Generate QR code
       const qrData = JSON.stringify({
-        code: confirmationCode.toUpperCase(),
-        id: rsvpData.id,
-        name: rsvpData.profiles?.name,
-        drop: rsvpData.drops?.slug
+        type: 'club25-checkin',
+        confirmationCode: confirmationCode.toUpperCase(),
+        userId: ticketData.user_id,
+        dropId: ticketData.drop_id,
+        rsvpId: ticketData.id,
+        name: ticketData.profiles?.name || 'Guest',
+        dropTitle: ticketData.drops?.title
       })
 
       const qrUrl = await QRCode.toDataURL(qrData, {
