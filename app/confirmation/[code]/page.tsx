@@ -156,7 +156,16 @@ export default function ConfirmationPage({ params }: { params: { code: string } 
         >
           <div className="text-sm text-club-cream/50 mb-2 tracking-widest">CONFIRMATION CODE</div>
           <div className="text-4xl font-mono font-bold text-club-gold mb-4">{params.code}</div>
-          <div className="text-sm text-club-cream/70">Save this code — you'll need it to check in</div>
+          <div className="text-sm text-club-cream/70 mb-6">Save this code — you'll need it to check in</div>
+          
+          {/* View Ticket CTA */}
+          <Link 
+            href={`/my-ticket?code=${params.code}`}
+            className="inline-flex items-center gap-3 px-8 py-4 bg-club-gold text-club-blue font-semibold rounded-lg hover:bg-club-gold/90 active:scale-95 transition-all touch-manipulation"
+          >
+            <QrCode className="w-5 h-5" />
+            <span>View My Ticket & QR Code</span>
+          </Link>
         </motion.div>
 
         {/* Event Details */}

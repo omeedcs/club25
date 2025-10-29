@@ -1,7 +1,9 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { supabase } from '@/lib/supabase/client'
+import { X, Check } from 'lucide-react'
 import Modal from './Modal'
 
 interface RSVPModalProps {
@@ -114,7 +116,10 @@ export default function RSVPModal({ isOpen, onClose, dropSlug, chapterTitle, inv
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full bg-club-charcoal/30 border border-club-cream/20 px-4 py-2.5 text-club-cream focus:border-club-gold outline-none transition-colors"
+                autoComplete="email"
+                inputMode="email"
+                className="w-full bg-club-charcoal/50 border border-club-cream/20 px-4 py-4 text-club-cream focus:border-club-gold outline-none transition-colors rounded-lg text-base touch-manipulation"
+                placeholder="your@email.com"
               />
             </div>
 
@@ -139,8 +144,8 @@ export default function RSVPModal({ isOpen, onClose, dropSlug, chapterTitle, inv
                 value={formData.dietary}
                 onChange={handleChange}
                 rows={3}
-                className="w-full bg-club-charcoal/30 border border-club-cream/20 px-4 py-2.5 text-club-cream focus:border-club-gold outline-none transition-colors resize-none"
-                placeholder="Any allergies or preferences..."
+                className="w-full bg-club-charcoal/50 border border-club-cream/20 px-4 py-4 text-club-cream focus:border-club-gold outline-none transition-colors resize-none rounded-lg text-base touch-manipulation"
+                placeholder="Any allergies or dietary restrictions?"
               />
             </div>
 

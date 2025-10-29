@@ -1,18 +1,45 @@
 {
-  "name": "Club25",
+  "name": "Club25 — Invitation Only",
   "short_name": "Club25",
-  "description": "Intimate supper club experiences in Dallas, TX",
+  "description": "An intimate supper club. 25 seats. One secret location. Every two weeks, a new chapter unfolds in Dallas.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#0047BB",
-  "theme_color": "#0047BB",
   "orientation": "portrait",
+  "background_color": "#004aad",
+  "theme_color": "#004aad",
+  "categories": ["lifestyle", "food", "social"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "shortcuts": [
+    {
+      "name": "My Ticket",
+      "short_name": "Ticket",
+      "description": "View your ticket and QR code",
+      "url": "/my-ticket",
+      "icons": [
+        {
+          "src": "/logo.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
