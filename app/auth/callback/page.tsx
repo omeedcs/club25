@@ -1,69 +1,59 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 
 export default function AuthCallbackPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [checking, setChecking] = useState(true)
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Get the hash from URL (Supabase puts auth tokens in hash)
-        const hashParams = new URLSearchParams(window.location.hash.substring(1))
-        const access_token = hashParams.get('access_token')
-        const refresh_token = hashParams.get('refresh_token')
+        console.log('Auth callback - waiting for session...')
         
-        console.log('Auth callback page loaded:', {
-          hash: window.location.hash,
-          hasAccessToken: !!access_token,
-          hasRefreshToken: !!refresh_token
+        // Supabase magic links set cookies directly via HTTP redirect
+        // We need to wait a moment for the cookies to be set, then check
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // Now check for session
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        console.log('Session check result:', {
+          hasSession: !!session,
+          userId: session?.user?.id,
+          email: session?.user?.email,
+          error: error?.message
         })
 
-        if (access_token && refresh_token) {
-          // Set the session
-          const { data, error } = await supabase.auth.setSession({
-            access_token,
-            refresh_token
-          })
-
-          if (error) {
-            console.error('Error setting session:', error)
-            router.push('/login?error=auth_failed')
-            return
-          }
-
-          console.log('Session set successfully:', {
-            userId: data.user?.id,
-            email: data.user?.email
-          })
-
-          // Wait a moment to ensure session is fully persisted
-          await new Promise(resolve => setTimeout(resolve, 500))
-
-          // Get redirect destination
+        if (session) {
+          console.log('✅ Session found! Redirecting to admin...')
           const next = searchParams.get('next') || '/admin'
-          console.log('Redirecting to:', next)
-          router.push(next)
+          
+          // Use window.location for a hard redirect to ensure cookies are sent
+          window.location.href = next
         } else {
-          console.log('No tokens in hash, checking for existing session')
+          console.error('❌ No session found after callback')
           
-          // Check if session already exists
-          const { data: { session } } = await supabase.auth.getSession()
+          // Try one more time with refresh
+          const { data: { session: retrySession } } = await supabase.auth.refreshSession()
           
-          if (session) {
+          if (retrySession) {
+            console.log('✅ Session found on retry!')
             const next = searchParams.get('next') || '/admin'
-            router.push(next)
+            window.location.href = next
           } else {
-            console.log('No session found, redirecting to login')
+            console.error('❌ Still no session, redirecting to login')
             router.push('/login?error=no_session')
           }
         }
       } catch (error) {
         console.error('Error in auth callback:', error)
         router.push('/login?error=auth_failed')
+      } finally {
+        setChecking(false)
       }
     }
 
