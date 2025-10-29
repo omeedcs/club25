@@ -13,11 +13,6 @@ const nextConfig = {
   swcMinify: true,
   compress: true,
   
-  // Mobile PWA support
-  experimental: {
-    optimizeCss: true,
-  },
-  
   // Headers for better caching
   async headers() {
     return [
