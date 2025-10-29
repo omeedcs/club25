@@ -3,9 +3,12 @@
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import RSVPModal from './RSVPModal'
+import InviteCodeModal from './InviteCodeModal'
 
 export default function CurrentChapter() {
-  const [showModal, setShowModal] = useState(false)
+  const [showInviteModal, setShowInviteModal] = useState(false)
+  const [showRSVPModal, setShowRSVPModal] = useState(false)
+  const [validatedCode, setValidatedCode] = useState('')
   const [drop, setDrop] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
@@ -55,6 +58,26 @@ export default function CurrentChapter() {
         </div>
       </section>
     )
+  }
+
+  const handleRequestAccess = () => {
+    // Check if user already validated a code in this session
+    const storedCode = localStorage.getItem('club25_invite_code')
+    
+    if (storedCode) {
+      // Code already validated, go straight to RSVP
+      setValidatedCode(storedCode)
+      setShowRSVPModal(true)
+    } else {
+      // No code yet, show invite modal
+      setShowInviteModal(true)
+    }
+  }
+
+  const handleCodeValidated = (code: string) => {
+    setValidatedCode(code)
+    setShowInviteModal(false)
+    setShowRSVPModal(true)
   }
 
   const currentChapter = {
@@ -125,7 +148,7 @@ export default function CurrentChapter() {
 
             {/* RSVP Button */}
             <motion.button
-              onClick={() => setShowModal(true)}
+              onClick={handleRequestAccess}
               className={`px-12 py-4 relative overflow-hidden group ${
                 currentChapter.status === 'sold_out' 
                   ? 'bg-club-charcoal/50 text-club-cream/50 border border-club-cream/20' 
@@ -142,11 +165,18 @@ export default function CurrentChapter() {
         </div>
       </section>
 
+      <InviteCodeModal 
+        isOpen={showInviteModal} 
+        onClose={() => setShowInviteModal(false)}
+        onCodeValidated={handleCodeValidated}
+      />
+
       <RSVPModal 
-        isOpen={showModal} 
-        onClose={() => setShowModal(false)} 
+        isOpen={showRSVPModal} 
+        onClose={() => setShowRSVPModal(false)} 
         dropSlug={currentChapter.slug}
-        chapterTitle={currentChapter.title} 
+        chapterTitle={currentChapter.title}
+        inviteCode={validatedCode}
       />
     </>
   )

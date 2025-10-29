@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 import Image from 'next/image'
+import InviteCodeModal from './InviteCodeModal'
 
 interface CardCascadeIntroProps {
   setAudioStarted: (started: boolean) => void
@@ -11,8 +12,14 @@ interface CardCascadeIntroProps {
 
 export default function CardCascadeIntro({ setAudioStarted, onComplete }: CardCascadeIntroProps) {
   const [started, setStarted] = useState(false)
+  const [showInviteModal, setShowInviteModal] = useState(false)
 
-  const handleEnter = () => {
+  const handleRequestAccess = () => {
+    setShowInviteModal(true)
+  }
+
+  const handleCodeValidated = (code: string) => {
+    setShowInviteModal(false)
     setStarted(true)
     setAudioStarted(true)
     
@@ -145,7 +152,7 @@ export default function CardCascadeIntro({ setAudioStarted, onComplete }: CardCa
 
             {/* Enter button */}
             <motion.button
-              onClick={handleEnter}
+              onClick={handleRequestAccess}
               className="group relative px-10 sm:px-12 py-3 sm:py-4 min-h-[56px] border-2 border-club-cream text-club-cream hover:bg-club-cream hover:text-club-blue transition-all duration-300 text-base md:text-lg tracking-[0.15em] active:scale-95 touch-manipulation overflow-hidden"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -227,7 +234,7 @@ export default function CardCascadeIntro({ setAudioStarted, onComplete }: CardCa
       {/* Skip button */}
       {!started && (
         <motion.button
-          onClick={handleEnter}
+          onClick={handleRequestAccess}
           className="absolute bottom-8 right-8 text-club-cream/50 hover:text-club-cream text-sm tracking-wider transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -236,6 +243,13 @@ export default function CardCascadeIntro({ setAudioStarted, onComplete }: CardCa
           SKIP →
         </motion.button>
       )}
+
+      {/* Invite Code Modal */}
+      <InviteCodeModal 
+        isOpen={showInviteModal} 
+        onClose={() => setShowInviteModal(false)}
+        onCodeValidated={handleCodeValidated}
+      />
     </motion.section>
   )
 }

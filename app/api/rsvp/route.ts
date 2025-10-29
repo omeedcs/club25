@@ -5,7 +5,31 @@ import { generateQRCode, generateConfirmationCode } from '@/lib/qr'
 
 export async function POST(request: NextRequest) {
   try {
-    const { dropSlug, name, email, phone, dietaryNotes } = await request.json()
+    const { dropSlug, name, email, phone, dietaryNotes, inviteCode } = await request.json()
+
+    // Validate invite code
+    if (!inviteCode) {
+      return NextResponse.json({ error: 'Invite code required' }, { status: 400 })
+    }
+
+    const { data: codeData, error: codeError } = await supabaseAdmin
+      .from('invite_codes')
+      .select('*')
+      .eq('code', inviteCode.toUpperCase())
+      .eq('active', true)
+      .maybeSingle()
+
+    if (codeError || !codeData) {
+      return NextResponse.json({ error: 'Invalid invite code' }, { status: 400 })
+    }
+
+    if (codeData.current_uses >= codeData.max_uses) {
+      return NextResponse.json({ error: 'Invite code has reached usage limit' }, { status: 400 })
+    }
+
+    if (codeData.expires_at && new Date(codeData.expires_at) < new Date()) {
+      return NextResponse.json({ error: 'Invite code has expired' }, { status: 400 })
+    }
 
     // Get drop
     const { data: drop, error: dropError } = await supabaseAdmin
@@ -55,10 +79,16 @@ export async function POST(request: NextRequest) {
       userId = authUser.user.id
       console.log('✅ Auth user created:', userId)
 
-      // Create profile
+      // Create profile with invite tracking
       const { error: profileError } = await supabaseAdmin
         .from('profiles')
-        .insert({ id: userId, email, name, phone })
+        .insert({ 
+          id: userId, 
+          email, 
+          name, 
+          phone,
+          invited_by_code: inviteCode.toUpperCase()
+        })
       
       if (profileError) {
         console.error('❌ Profile creation failed:', profileError)
@@ -93,7 +123,7 @@ export async function POST(request: NextRequest) {
     const qrCodeDataURL = await generateQRCode(qrData)
     console.log('🎫 QR Code generated, length:', qrCodeDataURL.length, 'Preview:', qrCodeDataURL.substring(0, 50) + '...')
 
-    // Create RSVP
+    // Create RSVP with invite code tracking
     const { data: rsvp, error: rsvpError } = await supabaseAdmin
       .from('rsvps')
       .insert({
@@ -101,12 +131,19 @@ export async function POST(request: NextRequest) {
         drop_id: drop.id,
         status,
         dietary_notes: dietaryNotes,
-        confirmation_code: confirmationCode
+        confirmation_code: confirmationCode,
+        used_invite_code: inviteCode.toUpperCase()
       })
       .select()
       .single()
 
     if (rsvpError) throw rsvpError
+    
+    // Increment invite code usage
+    await supabaseAdmin
+      .from('invite_codes')
+      .update({ current_uses: codeData.current_uses + 1 })
+      .eq('id', codeData.id)
     
     console.log('✅ RSVP created successfully:', { rsvpId: rsvp.id, confirmationCode, status })
 
