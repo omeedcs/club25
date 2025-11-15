@@ -9,11 +9,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid code format' }, { status: 400 })
     }
 
+    const upperCode = code.toUpperCase()
+
+    // Special handling for Alishba's Austin itinerary code
+    if (upperCode === 'CLUB-ALISHBA') {
+      return NextResponse.json({ 
+        valid: true,
+        code: upperCode,
+        redirectTo: '/austin-alishba'
+      })
+    }
+
     // Check if code exists and is valid
     const { data: inviteCode, error } = await supabaseAdmin
       .from('invite_codes')
       .select('*')
-      .eq('code', code.toUpperCase())
+      .eq('code', upperCode)
       .eq('active', true)
       .maybeSingle()
 

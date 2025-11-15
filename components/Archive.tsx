@@ -50,7 +50,7 @@ export default function Archive() {
 
   if (loading) {
     return (
-      <section className="relative min-h-screen flex items-center justify-center px-6 py-24">
+      <section ref={sectionRef} className="relative min-h-screen flex items-center justify-center px-6 py-24">
         <motion.div
           className="flex flex-col items-center gap-4"
           initial={{ opacity: 0 }}

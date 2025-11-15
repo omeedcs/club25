@@ -1,0 +1,12 @@
+<svg width="500" height="500" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+  <!-- Transparent background - cream colored "25" with blue "Club" text -->
+  
+  <!-- "2" shape - cream fill -->
+  <path d="M 106 169 C 106 169 106 180 106 180 L 106 230 L 140 230 C 140 230 160 230 160 230 C 170 230 175 225 175 215 C 175 205 170 200 160 200 L 140 200 L 140 169 L 246 169 C 246 169 246 200 246 200 L 210 200 L 210 230 C 210 240 205 248 195 253 L 156 275 L 246 275 L 246 330 L 106 330 L 106 275 L 165 245 C 175 240 178 235 178 225 L 178 169 Z" fill="#fffcf7"/>
+  
+  <!-- "5" shape - cream fill -->
+  <path d="M 253 169 L 393 169 L 393 225 L 313 225 L 313 255 L 350 255 C 370 255 383 268 383 288 L 383 310 C 383 330 370 343 350 343 L 283 343 C 263 343 250 330 250 310 L 250 280 L 290 280 L 290 310 C 290 315 293 318 298 318 L 345 318 C 350 318 353 315 353 310 L 353 288 C 353 283 350 280 345 280 L 283 280 C 263 280 250 267 250 247 L 250 169 Z" fill="#fffcf7"/>
+  
+  <!-- "Club" text in blue, positioned over the "5" -->
+  <text x="256" y="310" font-family="Arial, Helvetica, sans-serif" font-size="48" font-weight="bold" fill="#004aad">Club</text>
+</svg>

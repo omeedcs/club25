@@ -35,7 +35,13 @@ export default function InviteCodeModal({ isOpen, onClose, onCodeValidated }: In
 
       // Store validated code in localStorage for session
       localStorage.setItem('club25_invite_code', code.trim().toUpperCase())
-      onCodeValidated(code.trim().toUpperCase())
+      
+      // Check if there's a special redirect (like for CLUB-ALISHBA)
+      if (data.redirectTo) {
+        window.location.href = data.redirectTo
+      } else {
+        onCodeValidated(code.trim().toUpperCase())
+      }
     } catch (err: any) {
       setError(err.message)
     } finally {

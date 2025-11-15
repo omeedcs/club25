@@ -1,0 +1,103 @@
+# 🤠 Alishba's Austin Itinerary Feature
+
+A special, hyper-optimized Austin itinerary page created for Alishba's Saturday trip!
+
+## 🎯 Features
+
+- **17 curated locations** covering the best of Austin
+- **Timeline view** with time-based organization (morning, afternoon, evening, night)
+- **Budget breakdown** showing costs by category
+- **Live Google Maps navigation** for each location
+- **Pro tips** for every spot
+- **Beautiful, responsive UI** matching Club25's aesthetic
+- **Cost estimates** totaling ~$241 for the full day
+
+## 🔐 Access
+
+Enter the invite code: **CLUB-ALISHBA**
+
+This will redirect to: `/austin-alishba`
+
+## 📍 Itinerary Highlights
+
+### Morning (10 AM - 12 PM)
+- UT Campus
+- Cabo Bob's (lunch)
+- Texas Capitol Mall
+
+### Afternoon (12:45 PM - 5 PM)
+- Congress Avenue Bridge
+- Lady Bird Lake Trail
+- Long Center Terrace (best skyline view!)
+- First-Ever Chuy's
+- Zilker Park
+- Mozart's Coffee (amazing tiramisu!)
+- Mount Bonnell (panoramic views)
+- Mayfield Park (peacocks!)
+
+### Evening (5:45 PM - 9 PM)
+- Aba Restaurant (Mediterranean fine dining)
+- South Congress walking & shopping
+- Sunset + Bridge Bats 🦇 (1.5 million bats!)
+- Zeds Ice Cream
+
+### Night (9:30 PM - 11:30 PM)
+- West 6th Street bars
+- Joe Rogan's Comedy Mothership
+
+## 💰 Budget Breakdown
+
+- **Food & Drinks**: ~$106
+- **Activities**: Most are FREE!
+- **Shopping**: ~$30 (optional on South Congress)
+- **Nightlife**: ~$52
+- **Total**: ~$241
+
+Many of the best spots (views, parks, trails, bats) are completely free!
+
+## 🚀 To Deploy This Feature
+
+### 1. Run the database migration:
+```bash
+# If using Supabase CLI:
+supabase db push
+
+# Or run the SQL directly in Supabase dashboard:
+cat supabase/migrations/add_alishba_code.sql
+```
+
+### 2. Start the dev server:
+```bash
+npm run dev
+```
+
+### 3. Test it out:
+1. Go to `http://localhost:3000`
+2. Enter code: `CLUB-ALISHBA`
+3. You'll be redirected to the Austin itinerary page!
+
+## 📱 Mobile Optimized
+
+The page is fully responsive and optimized for mobile viewing - perfect for checking on-the-go during the trip!
+
+## 🎨 Design
+
+- Follows Club25's design system (club-gold, club-cream, club-blue, club-charcoal)
+- Smooth animations with Framer Motion
+- Beautiful gradients and visual hierarchy
+- Touch-optimized for mobile
+
+## 🗺️ Navigation
+
+Each location has a "Navigate" button that opens Google Maps with:
+- Live traffic data
+- Turn-by-turn directions
+- Current location tracking
+
+## ⭐ Priority System
+
+- **MUST-SEE**: Can't-miss Austin experiences
+- **Recommended**: Great if you have time
+- **Optional**: Bonus spots if you want more
+
+Enjoy Austin! 🤠✨
